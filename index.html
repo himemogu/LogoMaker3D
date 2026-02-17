@@ -129,6 +129,11 @@
                 <input type="range" id="rough-range" min="0" max="1.0" step="0.01" value="0.23" class="w-full">
             </div>
             <div>
+                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">RGB Intensity
+                    <span id="rgb-val">0.5</span></label>
+                <input type="range" id="rgb-range" min="0" max="5.0" step="0.1" value="0.5" class="w-full">
+            </div>
+            <div>
                 <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Depth <span id="depth-val">2.0</span></label>
                 <input type="range" id="depth-range" min="0.1" max="10.0" step="0.1" value="2.0" class="w-full">
             </div>
@@ -325,15 +330,41 @@
                     }
                 }
                 geometry.center(); // Center after creation
-            } else { // Gold bar, etc.
+            } else if (shapeType === 'goldbar') {
+                const width = 16, depth = 8, height = 3.0;
                 const shape = new THREE.Shape();
-                const w = 16, h = 8, r = 1.0;
-                shape.moveTo(-w/2+r, -h/2); shape.lineTo(w/2-r, -h/2); shape.quadraticCurveTo(w/2, -h/2, w/2, -h/2+r);
-                shape.lineTo(w/2, h/2-r); shape.quadraticCurveTo(w/2, h/2, w/2-r, h/2); shape.lineTo(-w/2+r, h/2);
-                shape.quadraticCurveTo(-w/2, h/2, -w/2, h/2-r); shape.lineTo(-w/2, -h/2+r); shape.quadraticCurveTo(-w/2, -h/2, -w/2+r, -h/2);
-                geometry = new THREE.ExtrudeGeometry(shape, { depth: 3, bevelEnabled: true, bevelThickness: 0.5, bevelSize: 0.5 });
-                geometry.center(); 
-                geometry.rotateX(Math.PI/2);
+                const radius = 1.0;
+                const x = -width / 2, y = -depth / 2;
+
+                shape.moveTo(x + radius, y);
+                shape.lineTo(x + width - radius, y);
+                shape.quadraticCurveTo(x + width, y, x + width, y + radius);
+                shape.lineTo(x + width, y + depth - radius);
+                shape.quadraticCurveTo(x + width, y + depth, x + width - radius, y + depth);
+                shape.lineTo(x + radius, y + depth);
+                shape.quadraticCurveTo(x, y + depth, x, y + depth - radius);
+                shape.lineTo(x, y + radius);
+                shape.quadraticCurveTo(x, y, x + radius, y);
+
+                const extrudeSettings = {
+                    steps: 1, depth: height, bevelEnabled: true,
+                    bevelThickness: 0.6, bevelSize: 0.6, bevelOffset: 0, bevelSegments: 8
+                };
+
+                geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                const position = geometry.attributes.position;
+                for (let i = 0; i < position.count; i++) {
+                    const z = position.getZ(i);
+                    if (z > height / 2) {
+                        position.setX(i, position.getX(i) * 0.85);
+                        position.setY(i, position.getY(i) * 0.85);
+                    }
+                }
+                geometry.rotateX(-Math.PI / 2);
+                geometry.center();
+                position.needsUpdate = true;
+                geometry.computeVertexNormals();
+                setMaterial('#ffcc33', 0.18);
             }
 
             // Ensure geometry exists before bounding box and material operations
@@ -349,26 +380,48 @@
             if (maxD > 35) { geometry.scale(35 / maxD, 35 / maxD, 35 / maxD); }
 
             const material = new THREE.MeshStandardMaterial({
-                color: 0xffcc33, metalness: 1.0, 
+                color: mesh ? mesh.material.color : 0xffcc33,
+                metalness: 1.0,
                 roughness: parseFloat(document.getElementById('rough-range').value),
-                envMap: currentEnvMap, envMapIntensity: 2.5,
-                side: THREE.DoubleSide
+                envMap: currentEnvMap,
+                envMapIntensity: 2.5
             });
 
             material.onBeforeCompile = (shader) => {
                 shader.uniforms.uRgbIntensity = uniforms.uRgbIntensity;
                 shader.uniforms.uFresnelPower = uniforms.uFresnelPower;
                 shader.uniforms.uTime = uniforms.uTime;
+
+                shader.vertexShader = `
+          varying vec3 vNormalW;
+          varying vec3 vViewDirW;
+          ${shader.vertexShader}
+        `.replace(
+                    `#include <worldpos_vertex>`,
+                    `#include <worldpos_vertex>
+           vNormalW = normalize( vec3( modelMatrix * vec4( transformedNormal, 0.0 ) ) );
+           vViewDirW = normalize( cameraPosition - worldPosition.xyz );
+          `
+                );
+
                 shader.fragmentShader = `
-                    uniform float uRgbIntensity;
-                    uniform float uFresnelPower;
-                    uniform float uTime;
-                    ${shader.fragmentShader}
-                `.replace(`#include <dithering_fragment>`, `
-                    #include <dithering_fragment>
-                    float fresnel = pow(1.0 - max(dot(normalize(vViewPosition), normalize(vNormal)), 0.0), uFresnelPower);
-                    gl_FragColor.rgb += vec3(fresnel * 0.5) * uRgbIntensity;
-                `);
+          uniform float uRgbIntensity;
+          uniform float uFresnelPower;
+          uniform float uTime;
+          varying vec3 vNormalW;
+          varying vec3 vViewDirW;
+          ${shader.fragmentShader}
+        `.replace(
+                    `#include <dithering_fragment>`,
+                    `#include <dithering_fragment>
+          float fresnel = pow(1.0 - max(dot(vNormalW, vViewDirW), 0.0), uFresnelPower);
+          vec3 shift;
+          shift.r = fresnel * abs(sin(vNormalW.x * 5.0 + uTime * 0.5));
+          shift.g = fresnel * abs(sin(vNormalW.y * 5.0 + uTime * 0.6 + 2.0));
+          shift.b = fresnel * abs(sin(vNormalW.z * 5.0 + uTime * 0.7 + 4.2));
+          gl_FragColor.rgb += shift * uRgbIntensity;
+          `
+                );
             };
 
             mesh = new THREE.Mesh(geometry, material);
@@ -438,6 +491,15 @@
                 const dv = document.getElementById('depth-val');
                 if (dv) dv.innerText = e.target.value;
             };
+
+            const rgbRange = document.getElementById('rgb-range');
+            if (rgbRange) {
+                rgbRange.oninput = (e) => {
+                    const val = parseFloat(e.target.value);
+                    document.getElementById('rgb-val').innerText = val.toFixed(1);
+                    uniforms.uRgbIntensity.value = val;
+                };
+            }
 
             const fs = document.getElementById('font-select');
             if (fs) fs.onchange = (e) => loadFont(e.target.value);
