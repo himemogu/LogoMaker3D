@@ -208,6 +208,10 @@
                 <span class="text-[10px] text-slate-400 font-bold uppercase">Light Background</span>
                 <input type="checkbox" id="bg-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
             </div>
+            <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Show Backdrop</span>
+                <input type="checkbox" id="backdrop-toggle" class="w-4 h-4 accent-indigo-500 cursor-pointer">
+            </div>
             <button id="regen-btn"
                 class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl uppercase text-[11px] tracking-[0.2em] transition-all shadow-lg active:scale-95">Update
                 Scene</button>
@@ -219,6 +223,7 @@
 
     <script>
         let scene, camera, renderer, mesh, currentFont = null, pmremGenerator, currentEnvMap;
+        let backdrop;
         let fonts = {};
         let uniforms = {
             uRgbIntensity: { value: 0.2 },
@@ -297,6 +302,7 @@
             pmremGenerator.compileEquirectangularShader();
 
             createStudioEnv();
+            createBackdrop();
             updatePresetsUI(); // Initialize presets UI
 
             const fs = document.getElementById('font-select');
@@ -327,6 +333,49 @@
 
             // Auto-apply first preset on type change
             if (presets.length > 0) applyPreset(presets[0]);
+        }
+
+        function createBackdrop() {
+            // Create a procedural checkerboard texture for refraction testing
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Draw grid
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(0, 0, size, size);
+            ctx.fillStyle = '#222222';
+            const cellSize = size / 8;
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 8; x++) {
+                    if ((x + y) % 2 === 0) {
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+            // Add some highlights
+            ctx.strokeStyle = '#334466';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, size, size);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(4, 4);
+
+            const geometry = new THREE.PlaneGeometry(200, 200);
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 0.5
+            });
+
+            backdrop = new THREE.Mesh(geometry, material);
+            backdrop.position.z = -20; // Place behind the logo
+            backdrop.visible = false;
+            scene.add(backdrop);
         }
 
         function getContrastYIQ(hexcolor) {
@@ -523,6 +572,11 @@
                 material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, reflectance: 0.2 });
             }
 
+            // Update backdrop
+            if (backdrop) {
+                backdrop.visible = document.getElementById('backdrop-toggle').checked;
+            }
+
             material.onBeforeCompile = (shader) => {
                 shader.uniforms.uRgbIntensity = uniforms.uRgbIntensity;
                 shader.uniforms.uFresnelPower = uniforms.uFresnelPower;
@@ -624,6 +678,9 @@
                 const val = parseFloat(e.target.value);
                 document.getElementById('rgb-val').innerText = val.toFixed(1);
                 uniforms.uRgbIntensity.value = val;
+            };
+            document.getElementById('backdrop-toggle').onchange = (e) => {
+                if (backdrop) backdrop.visible = e.target.checked;
             };
             document.getElementById('material-select').onchange = () => { updatePresetsUI(); generate(); };
             document.getElementById('font-select').onchange = (e) => loadFont(e.target.value);
