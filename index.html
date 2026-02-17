@@ -503,15 +503,63 @@
             if (zv) zv.innerText = Math.round(targetZ);
         }
 
-        let isDragging = false, prevMouse = { x: 0, y: 0 };
+        let isDragging = false, isPanning = false, prevMouse = { x: 0, y: 0 };
         function setupInteractions() {
-            canvas.onmousedown = (e) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; };
-            window.onmouseup = () => isDragging = false;
-            canvas.onmousemove = (e) => {
-                if (isDragging && mesh) {
-                    mesh.rotation.y += (e.clientX - prevMouse.x) * 0.01;
-                    mesh.rotation.x += (e.clientY - prevMouse.y) * 0.01;
+            const startMove = (e) => {
+                // e.button === 0 は左クリックを意味します
+                if (e.button === 0) {
+                    if (e.shiftKey) { // Shiftキーを押しながらドラッグでパン
+                        isPanning = true;
+                    } else { // 通常のドラッグで回転
+                        isDragging = true;
+                    }
                     prevMouse = { x: e.clientX, y: e.clientY };
+                }
+            };
+
+            const endMove = () => {
+                isDragging = false;
+                isPanning = false;
+            };
+
+            const move = (e) => {
+                if (mesh) {
+                    const deltaX = e.clientX - prevMouse.x;
+                    const deltaY = e.clientY - prevMouse.y;
+
+                    if (isDragging) {
+                        mesh.rotation.y += deltaX * 0.01;
+                        mesh.rotation.x += deltaY * 0.01;
+                    } else if (isPanning) {
+                        // パン操作の感度を調整
+                        mesh.position.x += deltaX * 0.05;
+                        mesh.position.y -= deltaY * 0.05; // Y軸は上下反転
+                    }
+                    prevMouse = { x: e.clientX, y: e.clientY };
+                }
+            };
+
+            canvas.onmousedown = startMove;
+            window.onmouseup = endMove;
+            canvas.onmousemove = move;
+
+            // タッチイベントはShiftキーがないため、常に回転として扱う
+            canvas.ontouchstart = (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true; // タッチイベントは常に回転
+                    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+            };
+            canvas.ontouchend = endMove;
+            canvas.ontouchmove = (e) => {
+                if (e.touches.length === 1) {
+                    if (isDragging && mesh) { // タッチイベントは回転のみ
+                        const deltaX = e.touches[0].clientX - prevMouse.x;
+                        const deltaY = e.touches[0].clientY - prevMouse.y;
+                        mesh.rotation.y += deltaX * 0.01;
+                        mesh.rotation.x += deltaY * 0.01;
+                        prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                    }
                 }
             };
 
@@ -520,6 +568,7 @@
                 e.preventDefault();
                 updateZoom(targetZ + e.deltaY * 0.05);
             }, { passive: false });
+
 
             const zr = document.getElementById('zoom-range');
             if (zr) zr.oninput = (e) => { updateZoom(parseFloat(e.target.value)); };
