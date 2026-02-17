@@ -336,17 +336,22 @@
         }
 
         function createBackdrop() {
-            // Create a procedural checkerboard texture for refraction testing
+            // Create a procedural vibrant grid for refraction testing
             const size = 512;
             const canvas = document.createElement('canvas');
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext('2d');
 
-            // Draw grid
-            ctx.fillStyle = '#111111';
+            // vibrant background gradient
+            const grad = ctx.createLinearGradient(0, 0, size, size);
+            grad.addColorStop(0, '#0f172a');
+            grad.addColorStop(1, '#1e1b4b');
+            ctx.fillStyle = grad;
             ctx.fillRect(0, 0, size, size);
-            ctx.fillStyle = '#222222';
+
+            // Draw vibrant grid
+            ctx.fillStyle = '#312e81';
             const cellSize = size / 8;
             for (let y = 0; y < 8; y++) {
                 for (let x = 0; x < 8; x++) {
@@ -355,25 +360,31 @@
                     }
                 }
             }
-            // Add some highlights
-            ctx.strokeStyle = '#334466';
-            ctx.lineWidth = 2;
+            // Add glowing highlight lines
+            ctx.strokeStyle = '#4f46e5';
+            ctx.lineWidth = 4;
             ctx.strokeRect(0, 0, size, size);
+            for (let i = 0; i <= size; i += cellSize * 2) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0); ctx.lineTo(i, size);
+                ctx.moveTo(0, i); ctx.lineTo(size, i);
+                ctx.stroke();
+            }
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
             texture.repeat.set(4, 4);
 
-            const geometry = new THREE.PlaneGeometry(200, 200);
+            const geometry = new THREE.PlaneGeometry(240, 240);
             const material = new THREE.MeshBasicMaterial({
                 map: texture,
                 transparent: true,
-                opacity: 0.5
+                opacity: 0.8 // Increased opacity for vibrancy
             });
 
             backdrop = new THREE.Mesh(geometry, material);
-            backdrop.position.z = -20; // Place behind the logo
+            backdrop.position.z = -25; // Slightly further back for depth
             backdrop.visible = false;
             scene.add(backdrop);
         }
