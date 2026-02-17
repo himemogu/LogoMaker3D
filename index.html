@@ -305,10 +305,10 @@
                             steps: 1,
                             depth: depthVal * 4, // Scale depth for opentype
                             bevelEnabled: true,
-                            bevelThickness: 0.05,
-                            bevelSize: 0.02,
+                            bevelThickness: 5.0,
+                            bevelSize: 2.0,
                             bevelOffset: 0,
-                            bevelSegments: 2
+                            bevelSegments: 4
                         };
                         geometry = new THREE.ExtrudeGeometry(shapes, extrudeSettings);
                         geometry.rotateX(Math.PI); // opentype fonts often need rotation
