@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Metallic Shader - Final Refined Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/SVGLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+    <style>
+        canvas {
+            max-width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+            cursor: grab;
+            touch-action: none;
+            background-image: radial-gradient(#2d3748 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .btn-preset {
+            font-size: 10px;
+            font-weight: 900;
+            padding: 8px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+    </style>
+</head>
+
+<body class="bg-[#0f172a] text-slate-200 min-h-screen flex flex-col items-center p-4">
+
+    <header class="text-center mb-4">
+        <h1 class="text-3xl font-black text-white tracking-tighter italic">METALLIC IRIDESCENCE</h1>
+        <p class="text-blue-400 text-[10px] uppercase tracking-[0.5em] font-bold">Refined Japanese 3D Studio</p>
+    </header>
+
+    <div
+        class="relative w-full max-w-5xl flex justify-center items-center mb-6 bg-black rounded-3xl p-1 border border-slate-800 shadow-2xl overflow-hidden aspect-video">
+        <div id="loading" class="loading-overlay">
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 border-2 border-blue-900 border-t-blue-400 rounded-full animate-spin"></div>
+                <p id="loading-text" class="text-blue-400 font-bold text-[10px] mt-4 uppercase tracking-widest">Processing...</p>
+            </div>
+        </div>
+        <canvas id="main-canvas" class="rounded-2xl"></canvas>
+    </div>
+
+    <div
+        class="w-full max-w-5xl bg-slate-900/50 backdrop-blur-md p-6 rounded-3xl border border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-8 shadow-xl">
+
+        <!-- Text & Font -->
+        <div class="space-y-4">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
+                Text & Style</h3>
+            <div>
+                <input type="text" id="text-input" value="黄金ロゴ制作"
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm outline-none focus:ring-2 ring-blue-500/50 text-white transition-all"
+                    maxlength="15">
+            </div>
+            <div>
+                <select id="font-select"
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
+                    <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/rocknrollone/RocknRollOne-Regular.ttf">RocknRoll One (中太・おすすめ)</option>
+                    <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf">Noto Sans JP (標準ゴシック)</option>
+                    <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/delagothicone/DelaGothicOne-Regular.ttf">Dela Gothic One (極太)</option>
+                    <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sawarabigothic/SawarabiGothic-Regular.ttf">Sawarabi Gothic (細字)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Material Presets -->
+        <div class="space-y-4">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
+                Material Presets</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="setMaterial('#ffcc33', 0.18)" class="btn-preset bg-amber-400 text-black">Gold</button>
+                <button onclick="setMaterial('#ffffff', 0.05)" class="btn-preset bg-slate-100 text-black">Silver</button>
+                <button onclick="setMaterial('#d1d5db', 0.15)" class="btn-preset bg-slate-300 text-black">Platinum</button>
+                <button onclick="setMaterial('#b87333', 0.35)" class="btn-preset bg-orange-700 text-white">Copper</button>
+            </div>
+            <select id="shape-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                <option value="text">3D Text Mode</option>
+                <option value="goldbar">Gold Bar Mode</option>
+            </select>
+        </div>
+
+        <!-- Fine Tuning -->
+        <div class="space-y-4">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
+                Fine Tuning</h3>
+            <div>
+                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Roughness <span id="rough-val">0.23</span></label>
+                <input type="range" id="rough-range" min="0" max="1.0" step="0.01" value="0.23" class="w-full">
+            </div>
+            <div>
+                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Depth <span id="depth-val">2.0</span></label>
+                <input type="range" id="depth-range" min="0.1" max="10.0" step="0.1" value="2.0" class="w-full">
+            </div>
+            <div>
+                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Zoom <span id="zoom-val">45</span></label>
+                <input type="range" id="zoom-range" min="15" max="150" step="1" value="45" class="w-full">
+            </div>
+        </div>
+
+        <!-- Action -->
+        <div class="flex flex-col justify-end space-y-3">
+            <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Auto Rotation</span>
+                <input type="checkbox" id="rotate-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
+            </div>
+            <button id="regen-btn"
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl uppercase text-[11px] tracking-[0.2em] transition-all shadow-lg active:scale-95">Update Scene</button>
+            <button id="download-btn"
+                class="w-full bg-slate-800 border border-slate-700 text-slate-400 py-2 rounded-xl text-[10px] uppercase hover:text-white transition-all italic font-bold">Capture PNG</button>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer, mesh, currentFont = null, pmremGenerator, currentEnvMap;
+        let fonts = {};
+        let uniforms = {
+            uRgbIntensity: { value: 0.5 },
+            uFresnelPower: { value: 2.0 },
+            uTime: { value: 0 }
+        };
+
+        const canvas = document.getElementById('main-canvas');
+        const loading = document.getElementById('loading');
+        const svgLoader = new THREE.SVGLoader();
+
+        let targetZ = 45;
+
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(24, 1280 / 720, 0.1, 1000);
+            camera.position.set(0, 0, targetZ);
+
+            renderer = new THREE.WebGLRenderer({
+                canvas, antialias: true, preserveDrawingBuffer: true, alpha: true
+            });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(1280, 720);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+
+            pmremGenerator = new THREE.PMREMGenerator(renderer);
+            pmremGenerator.compileEquirectangularShader();
+
+            createStudioEnv();
+            
+            const fs = document.getElementById('font-select');
+            if (fs) loadFont(fs.value);
+
+            setupInteractions();
+            animate();
+        }
+
+        async function loadFont(fontPath) {
+            if (fonts[fontPath]) {
+                currentFont = fonts[fontPath];
+                generate();
+                return;
+            }
+
+            loading.style.display = 'flex';
+            document.getElementById('loading-text').innerText = "Loading Font...";
+
+            try {
+                const response = await fetch(fontPath);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const buffer = await response.arrayBuffer();
+                const font = opentype.parse(buffer);
+                fonts[fontPath] = font;
+                currentFont = font;
+                generate();
+            } catch (err) {
+                console.error("Font loading failed:", err);
+                loading.style.display = 'none';
+            }
+        }
+
+        function createStudioEnv() {
+            const envScene = new THREE.Scene();
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const lights = [
+                { pos: [0, 50, -20], rot: [Math.PI/2, 0, 0], scale: [10, 100] },
+                { pos: [-50, 0, 10], rot: [0, Math.PI/2, 0], scale: [100, 20] },
+                { pos: [50, 0, 10], rot: [0, -Math.PI/2, 0], scale: [100, 20] }
+            ];
+            lights.forEach(l => {
+                const p = new THREE.Mesh(new THREE.PlaneGeometry(...l.scale), lightMat);
+                p.position.set(...l.pos); p.rotation.set(...l.rot);
+                envScene.add(p);
+            });
+            currentEnvMap = pmremGenerator.fromScene(envScene).texture;
+        }
+
+        function generate() {
+            if (!currentFont) return;
+            loading.style.display = 'flex';
+
+            if (mesh) {
+                scene.remove(mesh);
+                if (mesh.geometry) mesh.geometry.dispose();
+                if (mesh.material) mesh.material.dispose();
+            }
+
+            const shapeType = document.getElementById('shape-select').value;
+            const text = document.getElementById('text-input').value.trim() || "LOGO";
+            const dr = document.getElementById('depth-range');
+            const depthVal = dr ? parseFloat(dr.value) : 2.0;
+            
+            let geometry;
+
+            if (shapeType === 'text') {
+                const fontSize = 100;
+                const shapes = [];
+                for (let i = 0; i < text.length; i++) {
+                    const path = currentFont.getPath(text[i], i * fontSize * 0.9, 0, fontSize);
+                    const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg"><path d="${path.toPathData(1)}" /></svg>`;
+                    const data = svgLoader.parse(svgMarkup);
+                    data.paths.forEach(p => {
+                        shapes.push(...p.toShapes(true));
+                    });
+                }
+                
+                const extrudeSettings = {
+                    steps: 1,
+                    depth: depthVal * 4,
+                    bevelEnabled: true,
+                    bevelThickness: 0.05,
+                    bevelSize: 0.02,
+                    bevelOffset: 0,
+                    bevelSegments: 2
+                };
+                geometry = new THREE.ExtrudeGeometry(shapes, extrudeSettings);
+                geometry.center();
+                geometry.rotateX(Math.PI);
+            } else {
+                const shape = new THREE.Shape();
+                const w = 16, h = 8, r = 1.0;
+                shape.moveTo(-w/2+r, -h/2); shape.lineTo(w/2-r, -h/2); shape.quadraticCurveTo(w/2, -h/2, w/2, -h/2+r);
+                shape.lineTo(w/2, h/2-r); shape.quadraticCurveTo(w/2, h/2, w/2-r, h/2); shape.lineTo(-w/2+r, h/2);
+                shape.quadraticCurveTo(-w/2, h/2, -w/2, h/2-r); shape.lineTo(-w/2, -h/2+r); shape.quadraticCurveTo(-w/2, -h/2, -w/2+r, -h/2);
+                geometry = new THREE.ExtrudeGeometry(shape, { depth: 3, bevelEnabled: true, bevelThickness: 0.5, bevelSize: 0.5 });
+                geometry.center(); geometry.rotateX(Math.PI/2);
+            }
+
+            geometry.computeBoundingBox();
+            const bSize = new THREE.Vector3();
+            geometry.boundingBox.getSize(bSize);
+            const maxD = Math.max(bSize.x, bSize.y);
+            if (maxD > 35) { geometry.scale(35 / maxD, 35 / maxD, 35 / maxD); }
+
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xffcc33, metalness: 1.0, 
+                roughness: parseFloat(document.getElementById('rough-range').value),
+                envMap: currentEnvMap, envMapIntensity: 2.5,
+                side: THREE.DoubleSide
+            });
+
+            material.onBeforeCompile = (shader) => {
+                shader.uniforms.uRgbIntensity = uniforms.uRgbIntensity;
+                shader.uniforms.uFresnelPower = uniforms.uFresnelPower;
+                shader.uniforms.uTime = uniforms.uTime;
+                shader.fragmentShader = `
+                    uniform float uRgbIntensity;
+                    uniform float uFresnelPower;
+                    uniform float uTime;
+                    ${shader.fragmentShader}
+                `.replace(`#include <dithering_fragment>`, `
+                    #include <dithering_fragment>
+                    float fresnel = pow(1.0 - max(dot(normalize(vViewPosition), normalize(vNormal)), 0.0), uFresnelPower);
+                    gl_FragColor.rgb += vec3(fresnel * 0.5) * uRgbIntensity;
+                `);
+            };
+
+            mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            setTimeout(() => loading.style.display = 'none', 100);
+        }
+
+        function setMaterial(hex, roughness) {
+            if (mesh) {
+                mesh.material.color.set(hex);
+                mesh.material.roughness = roughness;
+                const rr = document.getElementById('rough-range');
+                if (rr) rr.value = roughness;
+                const rv = document.getElementById('rough-val');
+                if (rv) rv.innerText = roughness.toFixed(2);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            uniforms.uTime.value += 0.01;
+            camera.position.z += (targetZ - camera.position.z) * 0.1;
+            const rt = document.getElementById('rotate-toggle');
+            if (mesh && rt && rt.checked && !isDragging) mesh.rotation.y += 0.005;
+            renderer.render(scene, camera);
+        }
+
+        function updateZoom(val) {
+            targetZ = Math.max(15, Math.min(150, val));
+            const zr = document.getElementById('zoom-range');
+            const zv = document.getElementById('zoom-val');
+            if (zr) zr.value = targetZ;
+            if (zv) zv.innerText = Math.round(targetZ);
+        }
+
+        let isDragging = false, prevMouse = { x: 0, y: 0 };
+        function setupInteractions() {
+            canvas.onmousedown = (e) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; };
+            window.onmouseup = () => isDragging = false;
+            canvas.onmousemove = (e) => {
+                if (isDragging && mesh) {
+                    mesh.rotation.y += (e.clientX - prevMouse.x) * 0.01;
+                    mesh.rotation.x += (e.clientY - prevMouse.y) * 0.01;
+                    prevMouse = { x: e.clientX, y: e.clientY };
+                }
+            };
+
+            // Wheel zoom support
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                updateZoom(targetZ + e.deltaY * 0.05);
+            }, { passive: false });
+
+            const zr = document.getElementById('zoom-range');
+            if (zr) zr.oninput = (e) => { updateZoom(parseFloat(e.target.value)); };
+
+            const rr = document.getElementById('rough-range');
+            if (rr) rr.oninput = (e) => {
+                const val = parseFloat(e.target.value);
+                const rv = document.getElementById('rough-val');
+                if (rv) rv.innerText = val.toFixed(2);
+                if (mesh) mesh.material.roughness = val;
+            };
+
+            const dr = document.getElementById('depth-range');
+            if (dr) dr.oninput = (e) => {
+                const dv = document.getElementById('depth-val');
+                if (dv) dv.innerText = e.target.value;
+            };
+
+            const fs = document.getElementById('font-select');
+            if (fs) fs.onchange = (e) => loadFont(e.target.value);
+
+            const rb = document.getElementById('regen-btn');
+            if (rb) rb.onclick = generate;
+
+            const ss = document.getElementById('shape-select');
+            if (ss) ss.onchange = generate;
+
+            const db = document.getElementById('download-btn');
+            if (db) db.onclick = () => {
+                const link = document.createElement('a');
+                link.download = `logo-3d-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+        }
+
+        window.onload = initThree;
+    </script>
+</body>
+
+</html>
