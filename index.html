@@ -7,6 +7,8 @@
     <title>Advanced Metallic Shader - Final Refined Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/SVGLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
     <style>
@@ -79,10 +81,25 @@
             <div>
                 <select id="font-select"
                     class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
-                    <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/rocknrollone/RocknRollOne-Regular.ttf">RocknRoll One (中太・おすすめ)</option>
-                    <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf">Noto Sans JP (標準ゴシック)</option>
-                    <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/delagothicone/DelaGothicOne-Regular.ttf">Dela Gothic One (極太)</option>
-                    <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sawarabigothic/SawarabiGothic-Regular.ttf">Sawarabi Gothic (細字)</option>
+                    <optgroup label="日本語フォント">
+                        <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/rocknrollone/RocknRollOne-Regular.ttf">RocknRoll One (中太・おすすめ)</option>
+                        <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf">Noto Sans JP (標準ゴシック)</option>
+                        <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/delagothicone/DelaGothicOne-Regular.ttf">Dela Gothic One (極太)</option>
+                        <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sawarabigothic/SawarabiGothic-Regular.ttf">Sawarabi Gothic (細字)</option>
+                    </optgroup>
+                    <optgroup label="英字フォント (Three.js FontLoader)">
+                        <option value="helvetiker_bold">Helvetiker (Standard)</option>
+                        <option value="gentilis_bold">Gentilis (Classic)</option>
+                        <option value="optimer_bold">Optimer (Sharp)</option>
+                        <option
+                            value="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/droid/droid_sans_bold">
+                            Droid Sans (Roboto-like)</option>
+                        <option value="https://cdn.rawgit.com/mrdoob/three.js/master/examples/fonts/helvetiker_regular">
+                            Regular Light</option>
+                        <option
+                            value="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/droid/droid_serif_bold">
+                            Droid Serif (Academic)</option>
+                    </optgroup>
                 </select>
             </div>
         </div>
@@ -136,7 +153,7 @@
 
     <script>
         let scene, camera, renderer, mesh, currentFont = null, pmremGenerator, currentEnvMap;
-        let fonts = {};
+        let fonts = {}; // Stores { font: actualFontObject, type: 'opentype' | 'threejs' }
         let uniforms = {
             uRgbIntensity: { value: 0.5 },
             uFresnelPower: { value: 2.0 },
@@ -146,6 +163,7 @@
         const canvas = document.getElementById('main-canvas');
         const loading = document.getElementById('loading');
         const svgLoader = new THREE.SVGLoader();
+        const fontLoader = new THREE.FontLoader(); // Initialize FontLoader
 
         let targetZ = 45;
 
@@ -169,7 +187,7 @@
             createStudioEnv();
             
             const fs = document.getElementById('font-select');
-            if (fs) loadFont(fs.value);
+            if (fs) loadFont(fs.value); // Load initial font
 
             setupInteractions();
             animate();
@@ -186,16 +204,43 @@
             document.getElementById('loading-text').innerText = "Loading Font...";
 
             try {
-                const response = await fetch(fontPath);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const buffer = await response.arrayBuffer();
-                const font = opentype.parse(buffer);
-                fonts[fontPath] = font;
-                currentFont = font;
+                let loadedFont;
+                let fontType;
+
+                if (fontPath.endsWith('.ttf')) { // opentype.js for .ttf fonts
+                    const response = await fetch(fontPath);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const buffer = await response.arrayBuffer();
+                    loadedFont = opentype.parse(buffer);
+                    fontType = 'opentype';
+                } else { // THREE.FontLoader for .typeface.json fonts
+                    let url;
+                    if (fontPath.startsWith('http')) {
+                        // Already a full URL (e.g., from raw.githubusercontent.com)
+                        url = `${fontPath}.typeface.json`;
+                    } else {
+                        // Standard Three.js font name
+                        url = `https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/${fontPath}.typeface.json`;
+                    }
+                    
+                    loadedFont = await new Promise((resolve, reject) => {
+                        fontLoader.load(url, resolve, undefined, reject);
+                    });
+                    fontType = 'threejs';
+                }
+
+                fonts[fontPath] = { font: loadedFont, type: fontType };
+                currentFont = fonts[fontPath];
                 generate();
+
             } catch (err) {
                 console.error("Font loading failed:", err);
                 loading.style.display = 'none';
+                // Fallback to a default font if possible
+                if (fontPath !== document.getElementById('font-select').options[0].value) { // Prevent infinite loop if default fails
+                    alert('Failed to load font. Loading default font.');
+                    loadFont(document.getElementById('font-select').options[0].value);
+                }
             }
         }
 
@@ -216,8 +261,9 @@
         }
 
         function generate() {
-            if (!currentFont) return;
+            if (!currentFont) return; // Ensure font is loaded before generating
             loading.style.display = 'flex';
+            document.getElementById('loading-text').innerText = "Generating 3D model...";
 
             if (mesh) {
                 scene.remove(mesh);
@@ -226,50 +272,80 @@
             }
 
             const shapeType = document.getElementById('shape-select').value;
-            const text = document.getElementById('text-input').value.trim() || "LOGO";
-            const dr = document.getElementById('depth-range');
-            const depthVal = dr ? parseFloat(dr.value) : 2.0;
+            const text = document.getElementById('text-input').value.trim();
+            const depthRange = document.getElementById('depth-range');
+            const depthVal = depthRange ? parseFloat(depthRange.value) : 2.0;
             
             let geometry;
 
             if (shapeType === 'text') {
-                const fontSize = 100;
-                const shapes = [];
-                for (let i = 0; i < text.length; i++) {
-                    const path = currentFont.getPath(text[i], i * fontSize * 0.9, 0, fontSize);
-                    const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg"><path d="${path.toPathData(1)}" /></svg>`;
-                    const data = svgLoader.parse(svgMarkup);
-                    data.paths.forEach(p => {
-                        shapes.push(...p.toShapes(true));
-                    });
+                if (currentFont.type === 'opentype') {
+                    if (text === "") { // Handle empty text for opentype
+                        geometry = new THREE.BoxGeometry(1, 1, 1); // Placeholder
+                    } else {
+                        const fontSize = 100;
+                        const shapes = [];
+                        for (let i = 0; i < text.length; i++) {
+                            const path = currentFont.font.getPath(text[i], 0, 0, fontSize);
+                            // Adjust X position for each character to avoid overlap
+                            const charWidth = path.getBoundingBox().x2 - path.getBoundingBox().x1;
+                            const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="${charWidth}" height="${fontSize}"><path transform="translate(${i * fontSize * 0.9}, 0)" d="${path.toPathData(1)}" /></svg>`;
+                            const data = svgLoader.parse(svgMarkup);
+                            data.paths.forEach(p => {
+                                shapes.push(...p.toShapes(true));
+                            });
+                        }
+                        
+                        const extrudeSettings = {
+                            steps: 1,
+                            depth: depthVal * 4, // Scale depth for opentype
+                            bevelEnabled: true,
+                            bevelThickness: 0.05,
+                            bevelSize: 0.02,
+                            bevelOffset: 0,
+                            bevelSegments: 2
+                        };
+                        geometry = new THREE.ExtrudeGeometry(shapes, extrudeSettings);
+                        geometry.rotateX(Math.PI); // opentype fonts often need rotation
+                    }
+                } else if (currentFont.type === 'threejs') {
+                    if (text === "") { // Handle empty text for threejs
+                        geometry = new THREE.BoxGeometry(1, 1, 1); // Placeholder
+                    } else {
+                        geometry = new THREE.TextGeometry(text, {
+                            font: currentFont.font, 
+                            size: 8, 
+                            height: depthVal / 2, // Scale depth for TextGeometry
+                            curveSegments: 12, // Reduced for performance
+                            bevelEnabled: true, 
+                            bevelThickness: 0.5, 
+                            bevelSize: 0.3, 
+                            bevelSegments: 4 // Reduced for performance
+                        });
+                    }
                 }
-                
-                const extrudeSettings = {
-                    steps: 1,
-                    depth: depthVal * 4,
-                    bevelEnabled: true,
-                    bevelThickness: 0.05,
-                    bevelSize: 0.02,
-                    bevelOffset: 0,
-                    bevelSegments: 2
-                };
-                geometry = new THREE.ExtrudeGeometry(shapes, extrudeSettings);
-                geometry.center();
-                geometry.rotateX(Math.PI);
-            } else {
+                geometry.center(); // Center after creation
+            } else { // Gold bar, etc.
                 const shape = new THREE.Shape();
                 const w = 16, h = 8, r = 1.0;
                 shape.moveTo(-w/2+r, -h/2); shape.lineTo(w/2-r, -h/2); shape.quadraticCurveTo(w/2, -h/2, w/2, -h/2+r);
                 shape.lineTo(w/2, h/2-r); shape.quadraticCurveTo(w/2, h/2, w/2-r, h/2); shape.lineTo(-w/2+r, h/2);
                 shape.quadraticCurveTo(-w/2, h/2, -w/2, h/2-r); shape.lineTo(-w/2, -h/2+r); shape.quadraticCurveTo(-w/2, -h/2, -w/2+r, -h/2);
                 geometry = new THREE.ExtrudeGeometry(shape, { depth: 3, bevelEnabled: true, bevelThickness: 0.5, bevelSize: 0.5 });
-                geometry.center(); geometry.rotateX(Math.PI/2);
+                geometry.center(); 
+                geometry.rotateX(Math.PI/2);
+            }
+
+            // Ensure geometry exists before bounding box and material operations
+            if (!geometry) {
+                console.warn("No geometry created. Using default box.");
+                geometry = new THREE.BoxGeometry(10, 10, 10);
             }
 
             geometry.computeBoundingBox();
             const bSize = new THREE.Vector3();
             geometry.boundingBox.getSize(bSize);
-            const maxD = Math.max(bSize.x, bSize.y);
+            const maxD = Math.max(bSize.x, bSize.y, bSize.z); // Consider Z for depth
             if (maxD > 35) { geometry.scale(35 / maxD, 35 / maxD, 35 / maxD); }
 
             const material = new THREE.MeshStandardMaterial({
