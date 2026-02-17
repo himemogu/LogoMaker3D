@@ -70,7 +70,7 @@
     <div
         class="w-full max-w-5xl bg-slate-900/50 backdrop-blur-md p-6 rounded-3xl border border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-8 shadow-xl">
 
-        <!-- Text & Font -->
+        <!-- Text & Style -->
         <div class="space-y-4">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
                 Text & Style</h3>
@@ -116,8 +116,7 @@
                         <option
                             value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/kaiseidecol/KaiseiDecol-Regular.ttf">
                             Kaisei Decol (装飾書体)</option>
-                        <option
-                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/yomogi/Yomogi-Regular.ttf">
+                        <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/yomogi/Yomogi-Regular.ttf">
                             Yomogi (手書き風)</option>
 
 
@@ -139,26 +138,38 @@
                     </optgroup>
                 </select>
             </div>
+            <div>
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Shape</label>
+                <select id="shape-select"
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                    <option value="text">3D Text Mode</option>
+                    <option value="goldbar">Gold Bar Mode</option>
+                </select>
+            </div>
         </div>
 
-        <!-- Material Presets -->
+        <!-- Material -->
         <div class="space-y-4">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
-                Material Presets</h3>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="setMaterial('#ffcc33', 0.18)" class="btn-preset bg-amber-400 text-black">Gold</button>
-                <button onclick="setMaterial('#ffffff', 0.05)"
-                    class="btn-preset bg-slate-100 text-black">Silver</button>
-                <button onclick="setMaterial('#d1d5db', 0.15)"
-                    class="btn-preset bg-slate-300 text-black">Platinum</button>
-                <button onclick="setMaterial('#b87333', 0.35)"
-                    class="btn-preset bg-orange-700 text-white">Copper</button>
+                Material</h3>
+            <div>
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Type</label>
+                <select id="material-select"
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
+                    <option value="metallic">Metallic</option>
+                    <option value="glass">Glass</option>
+                    <option value="plastic">Plastic</option>
+                    <option value="cloth">Cloth</option>
+                    <option value="wood">Wood</option>
+                </select>
             </div>
-            <select id="shape-select"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
-                <option value="text">3D Text Mode</option>
-                <option value="goldbar">Gold Bar Mode</option>
-            </select>
+            <div id="presets-container">
+                <label id="presets-label" class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Metallic
+                    Presets</label>
+                <div id="material-presets" class="grid grid-cols-2 gap-2">
+                    <!-- Presets will be injected here -->
+                </div>
+            </div>
         </div>
 
         <!-- Fine Tuning -->
@@ -193,6 +204,10 @@
                 <span class="text-[10px] text-slate-400 font-bold uppercase">Auto Rotation</span>
                 <input type="checkbox" id="rotate-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
             </div>
+            <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Light Background</span>
+                <input type="checkbox" id="bg-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
+            </div>
             <button id="regen-btn"
                 class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl uppercase text-[11px] tracking-[0.2em] transition-all shadow-lg active:scale-95">Update
                 Scene</button>
@@ -204,17 +219,50 @@
 
     <script>
         let scene, camera, renderer, mesh, currentFont = null, pmremGenerator, currentEnvMap;
-        let fonts = {}; // Stores { font: actualFontObject, type: 'opentype' | 'threejs' }
+        let fonts = {};
         let uniforms = {
             uRgbIntensity: { value: 0.5 },
             uFresnelPower: { value: 2.0 },
             uTime: { value: 0 }
         };
 
+        const materialPresets = {
+            metallic: [
+                { name: 'Gold', color: '#ffcc33', rough: 0.18, metal: 1.0 },
+                { name: 'Silver', color: '#ffffff', rough: 0.05, metal: 1.0 },
+                { name: 'Platinum', color: '#d1d5db', rough: 0.15, metal: 1.0 },
+                { name: 'Copper', color: '#b87333', rough: 0.35, metal: 1.0 }
+            ],
+            glass: [
+                { name: 'Clear', color: '#ffffff', rough: 0.0, transmission: 1.0, ior: 1.5 },
+                { name: 'Frosted', color: '#ffffff', rough: 0.4, transmission: 1.0, ior: 1.5 },
+                { name: 'Emerald', color: '#50c878', rough: 0.1, transmission: 0.9, ior: 1.7 },
+                { name: 'Ruby', color: '#e0115f', rough: 0.1, transmission: 0.9, ior: 1.8 }
+            ],
+            plastic: [
+                { name: 'Glossy Red', color: '#ff0000', rough: 0.1, clearcoat: 1.0 },
+                { name: 'Matte Blue', color: '#1e40af', rough: 0.5, clearcoat: 0.0 },
+                { name: 'Neon Green', color: '#39ff14', rough: 0.2, clearcoat: 0.5 },
+                { name: 'Black PVC', color: '#111111', rough: 0.3, clearcoat: 1.0 }
+            ],
+            cloth: [
+                { name: 'Silk', color: '#fef3c7', rough: 0.3, sheen: 1.0 },
+                { name: 'Denim', color: '#3b82f6', rough: 0.8, sheen: 0.0 },
+                { name: 'Velvet', color: '#4c1d95', rough: 0.6, sheen: 1.0 },
+                { name: 'Cotton', color: '#f8fafc', rough: 0.9, sheen: 0.0 }
+            ],
+            wood: [
+                { name: 'Oak', color: '#b58b4c', rough: 0.7 },
+                { name: 'Walnut', color: '#3d2b1f', rough: 0.6 },
+                { name: 'Mahogany', color: '#4a0e0e', rough: 0.5 },
+                { name: 'Pine', color: '#e5c07b', rough: 0.8 }
+            ]
+        };
+
         const canvas = document.getElementById('main-canvas');
         const loading = document.getElementById('loading');
         const svgLoader = new THREE.SVGLoader();
-        const fontLoader = new THREE.FontLoader(); // Initialize FontLoader
+        const fontLoader = new THREE.FontLoader();
 
         let targetZ = 45;
 
@@ -236,12 +284,55 @@
             pmremGenerator.compileEquirectangularShader();
 
             createStudioEnv();
+            updatePresetsUI(); // Initialize presets UI
 
             const fs = document.getElementById('font-select');
-            if (fs) loadFont(fs.value); // Load initial font
+            if (fs) loadFont(fs.value);
 
             setupInteractions();
             animate();
+        }
+
+        function updatePresetsUI() {
+            const type = document.getElementById('material-select').value;
+            const container = document.getElementById('material-presets');
+            const label = document.getElementById('presets-label');
+
+            label.innerText = `${type.charAt(0).toUpperCase() + type.slice(1)} Presets`;
+            container.innerHTML = '';
+
+            materialPresets[type].forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-preset border border-slate-700 hover:border-slate-400 transition-colors';
+                btn.style.backgroundColor = p.color;
+                btn.style.color = getContrastYIQ(p.color);
+                btn.innerText = p.name;
+                btn.onclick = () => applyPreset(p);
+                container.appendChild(btn);
+            });
+        }
+
+        function getContrastYIQ(hexcolor) {
+            hexcolor = hexcolor.replace("#", "");
+            var r = parseInt(hexcolor.substr(0, 2), 16);
+            var g = parseInt(hexcolor.substr(2, 2), 16);
+            var b = parseInt(hexcolor.substr(4, 2), 16);
+            var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
+
+        function applyPreset(p) {
+            const type = document.getElementById('material-select').value;
+            const rr = document.getElementById('rough-range');
+            const rv = document.getElementById('rough-val');
+
+            if (rr) rr.value = p.rough;
+            if (rv) rv.innerText = p.rough.toFixed(2);
+
+            generate(); // Regenerate to apply all properties
+            if (mesh) {
+                mesh.material.color.set(p.color);
+            }
         }
 
         async function loadFont(fontPath) {
@@ -258,22 +349,14 @@
                 let loadedFont;
                 let fontType;
 
-                if (fontPath.endsWith('.ttf')) { // opentype.js for .ttf fonts
+                if (fontPath.endsWith('.ttf')) {
                     const response = await fetch(fontPath);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const buffer = await response.arrayBuffer();
                     loadedFont = opentype.parse(buffer);
                     fontType = 'opentype';
-                } else { // THREE.FontLoader for .typeface.json fonts
-                    let url;
-                    if (fontPath.startsWith('http')) {
-                        // Already a full URL (e.g., from raw.githubusercontent.com)
-                        url = `${fontPath}.typeface.json`;
-                    } else {
-                        // Standard Three.js font name
-                        url = `https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/${fontPath}.typeface.json`;
-                    }
-
+                } else {
+                    let url = fontPath.startsWith('http') ? `${fontPath}.typeface.json` : `https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/${fontPath}.typeface.json`;
                     loadedFont = await new Promise((resolve, reject) => {
                         fontLoader.load(url, resolve, undefined, reject);
                     });
@@ -287,9 +370,7 @@
             } catch (err) {
                 console.error("Font loading failed:", err);
                 loading.style.display = 'none';
-                // Fallback to a default font if possible
-                if (fontPath !== document.getElementById('font-select').options[0].value) { // Prevent infinite loop if default fails
-                    alert('Failed to load font. Loading default font.');
+                if (fontPath !== document.getElementById('font-select').options[0].value) {
                     loadFont(document.getElementById('font-select').options[0].value);
                 }
             }
@@ -297,14 +378,18 @@
 
         function createStudioEnv() {
             const envScene = new THREE.Scene();
+            // Use high-intensity colors for fake HDR effect in PMREM
             const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const brightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
             const lights = [
-                { pos: [0, 50, -20], rot: [Math.PI / 2, 0, 0], scale: [10, 100] },
-                { pos: [-50, 0, 10], rot: [0, Math.PI / 2, 0], scale: [100, 20] },
-                { pos: [50, 0, 10], rot: [0, -Math.PI / 2, 0], scale: [100, 20] }
+                { pos: [0, 50, -20], rot: [Math.PI / 2, 0, 0], scale: [20, 100], mat: brightMat },
+                { pos: [-50, 0, 10], rot: [0, Math.PI / 2, 0], scale: [100, 40], mat: lightMat },
+                { pos: [50, 0, 10], rot: [0, -Math.PI / 2, 0], scale: [100, 40], mat: lightMat },
+                { pos: [0, -50, 10], rot: [-Math.PI / 2, 0, 0], scale: [100, 20], mat: lightMat }
             ];
             lights.forEach(l => {
-                const p = new THREE.Mesh(new THREE.PlaneGeometry(...l.scale), lightMat);
+                const p = new THREE.Mesh(new THREE.PlaneGeometry(...l.scale), l.mat);
                 p.position.set(...l.pos); p.rotation.set(...l.rot);
                 envScene.add(p);
             });
@@ -312,11 +397,16 @@
         }
 
         function generate() {
-            if (!currentFont) return; // Ensure font is loaded before generating
+            if (!currentFont) return;
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Generating 3D model...";
 
+            let prevTransform = null;
             if (mesh) {
+                prevTransform = {
+                    rotation: mesh.rotation.clone(),
+                    position: mesh.position.clone()
+                };
                 scene.remove(mesh);
                 if (mesh.geometry) mesh.geometry.dispose();
                 if (mesh.material) mesh.material.dispose();
@@ -324,166 +414,149 @@
 
             const shapeType = document.getElementById('shape-select').value;
             const text = document.getElementById('text-input').value.trim();
-            const depthRange = document.getElementById('depth-range');
-            const depthVal = depthRange ? parseFloat(depthRange.value) : 2.0;
+            const depthVal = parseFloat(document.getElementById('depth-range').value);
+            const materialType = document.getElementById('material-select').value;
 
             let geometry;
-
             if (shapeType === 'text') {
                 if (currentFont.type === 'opentype') {
-                    if (text === "") { // Handle empty text for opentype
-                        geometry = new THREE.BoxGeometry(1, 1, 1); // Placeholder
+                    if (text === "") {
+                        geometry = new THREE.BoxGeometry(1, 1, 1);
                     } else {
                         const fontSize = 100;
                         const shapes = [];
                         for (let i = 0; i < text.length; i++) {
                             const path = currentFont.font.getPath(text[i], 0, 0, fontSize);
-                            // Adjust X position for each character to avoid overlap
                             const charWidth = path.getBoundingBox().x2 - path.getBoundingBox().x1;
                             const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="${charWidth}" height="${fontSize}"><path transform="translate(${i * fontSize * 0.9}, 0)" d="${path.toPathData(1)}" /></svg>`;
                             const data = svgLoader.parse(svgMarkup);
-                            data.paths.forEach(p => {
-                                shapes.push(...p.toShapes(true));
-                            });
+                            data.paths.forEach(p => shapes.push(...p.toShapes(true)));
                         }
-
-                        const extrudeSettings = {
-                            steps: 1,
-                            depth: depthVal * 4, // Scale depth for opentype
-                            bevelEnabled: true,
-                            bevelThickness: 5.0,
-                            bevelSize: 2.0,
-                            bevelOffset: 0,
-                            bevelSegments: 4
-                        };
-                        geometry = new THREE.ExtrudeGeometry(shapes, extrudeSettings);
-                        geometry.rotateX(Math.PI); // opentype fonts often need rotation
+                        geometry = new THREE.ExtrudeGeometry(shapes, { steps: 1, depth: depthVal * 4, bevelEnabled: true, bevelThickness: 5.0, bevelSize: 2.0, bevelOffset: 0, bevelSegments: 4 });
+                        geometry.rotateX(Math.PI);
                     }
-                } else if (currentFont.type === 'threejs') {
-                    if (text === "") { // Handle empty text for threejs
-                        geometry = new THREE.BoxGeometry(1, 1, 1); // Placeholder
-                    } else {
-                        geometry = new THREE.TextGeometry(text, {
-                            font: currentFont.font,
-                            size: 8,
-                            height: depthVal / 2, // Scale depth for TextGeometry
-                            curveSegments: 12, // Reduced for performance
-                            bevelEnabled: true,
-                            bevelThickness: 0.5,
-                            bevelSize: 0.3,
-                            bevelSegments: 4 // Reduced for performance
-                        });
-                    }
+                } else {
+                    geometry = new THREE.TextGeometry(text || " ", { font: currentFont.font, size: 8, height: depthVal / 2, curveSegments: 12, bevelEnabled: true, bevelThickness: 0.5, bevelSize: 0.3, bevelSegments: 4 });
                 }
-                geometry.center(); // Center after creation
-            } else if (shapeType === 'goldbar') {
-                const width = 16, depth = 8, height = 3.0;
+                geometry.center();
+            } else {
                 const shape = new THREE.Shape();
-                const radius = 1.0;
-                const x = -width / 2, y = -depth / 2;
-
-                shape.moveTo(x + radius, y);
-                shape.lineTo(x + width - radius, y);
-                shape.quadraticCurveTo(x + width, y, x + width, y + radius);
-                shape.lineTo(x + width, y + depth - radius);
-                shape.quadraticCurveTo(x + width, y + depth, x + width - radius, y + depth);
-                shape.lineTo(x + radius, y + depth);
-                shape.quadraticCurveTo(x, y + depth, x, y + depth - radius);
-                shape.lineTo(x, y + radius);
-                shape.quadraticCurveTo(x, y, x + radius, y);
-
-                const extrudeSettings = {
-                    steps: 1, depth: height, bevelEnabled: true,
-                    bevelThickness: 0.6, bevelSize: 0.6, bevelOffset: 0, bevelSegments: 8
-                };
-
-                geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-                const position = geometry.attributes.position;
-                for (let i = 0; i < position.count; i++) {
-                    const z = position.getZ(i);
-                    if (z > height / 2) {
-                        position.setX(i, position.getX(i) * 0.85);
-                        position.setY(i, position.getY(i) * 0.85);
-                    }
-                }
+                const w = 16, d = 8, h = 3.0, r = 1.0;
+                shape.moveTo(-w / 2 + r, -d / 2);
+                shape.lineTo(w / 2 - r, -d / 2);
+                shape.quadraticCurveTo(w / 2, -d / 2, w / 2, -d / 2 + r);
+                shape.lineTo(w / 2, d / 2 - r);
+                shape.quadraticCurveTo(w / 2, d / 2, w / 2 - r, d / 2);
+                shape.lineTo(-w / 2 + r, d / 2);
+                shape.quadraticCurveTo(-w / 2, d / 2, -w / 2, d / 2 - r);
+                shape.lineTo(-w / 2, -d / 2 + r);
+                shape.quadraticCurveTo(-w / 2, -d / 2, -w / 2 + r, -d / 2);
+                geometry = new THREE.ExtrudeGeometry(shape, { steps: 1, depth: h, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 8 });
                 geometry.rotateX(-Math.PI / 2);
                 geometry.center();
-                position.needsUpdate = true;
-                geometry.computeVertexNormals();
-                setMaterial('#ffcc33', 0.18);
-            }
-
-            // Ensure geometry exists before bounding box and material operations
-            if (!geometry) {
-                console.warn("No geometry created. Using default box.");
-                geometry = new THREE.BoxGeometry(10, 10, 10);
             }
 
             geometry.computeBoundingBox();
             const bSize = new THREE.Vector3();
             geometry.boundingBox.getSize(bSize);
-            const maxD = Math.max(bSize.x, bSize.y, bSize.z); // Consider Z for depth
-            if (maxD > 35) { geometry.scale(35 / maxD, 35 / maxD, 35 / maxD); }
+            const maxD = Math.max(bSize.x, bSize.y, bSize.z);
+            if (maxD > 35) geometry.scale(35 / maxD, 35 / maxD, 35 / maxD);
 
-            const material = new THREE.MeshStandardMaterial({
+            // Configure Material based on type
+            const matProps = {
                 color: mesh ? mesh.material.color : 0xffcc33,
-                metalness: 1.0,
                 roughness: parseFloat(document.getElementById('rough-range').value),
                 envMap: currentEnvMap,
                 envMapIntensity: 2.5
-            });
+            };
+
+            let material;
+            const isLightBg = document.getElementById('bg-toggle') && document.getElementById('bg-toggle').checked;
+
+            if (materialType === 'glass') {
+                material = new THREE.MeshPhysicalMaterial({
+                    ...matProps,
+                    metalness: 0.1,
+                    transmission: 1.0,
+                    ior: 1.52,
+                    thickness: 3.0,
+                    transparent: true,
+                    opacity: 1,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.05
+                });
+                if (!isLightBg) material.emissive.set(0x222222); // Help visibility on dark background
+            } else if (materialType === 'metallic') {
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 1.0 });
+            } else if (materialType === 'plastic') {
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, clearcoat: 1.0, clearcoatRoughness: 0.1 });
+            } else if (materialType === 'cloth') {
+                // Brighten cloth and boost sheen
+                material = new THREE.MeshPhysicalMaterial({
+                    ...matProps,
+                    color: new THREE.Color(matProps.color).multiplyScalar(1.5),
+                    metalness: 0,
+                    sheen: 1.0,
+                    sheenRoughness: 0.2,
+                    sheenColor: 0xffffff
+                });
+            } else { // Wood
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, reflectance: 0.2 });
+            }
 
             material.onBeforeCompile = (shader) => {
                 shader.uniforms.uRgbIntensity = uniforms.uRgbIntensity;
                 shader.uniforms.uFresnelPower = uniforms.uFresnelPower;
                 shader.uniforms.uTime = uniforms.uTime;
 
-                shader.vertexShader = `
-          varying vec3 vNormalW;
-          varying vec3 vViewDirW;
-          ${shader.vertexShader}
-        `.replace(
-                    `#include <worldpos_vertex>`,
-                    `#include <worldpos_vertex>
-           vNormalW = normalize( vec3( modelMatrix * vec4( transformedNormal, 0.0 ) ) );
-           vViewDirW = normalize( cameraPosition - worldPosition.xyz );
-          `
+                shader.vertexShader = shader.vertexShader.replace(
+                    'void main() {',
+                    `
+                    varying vec3 vNormalW;
+                    varying vec3 vViewDirW;
+                    void main() {
+                    `
+                ).replace(
+                    '#include <worldpos_vertex>',
+                    `
+                    #include <worldpos_vertex>
+                    vec4 localWorldPosition = modelMatrix * vec4( transformed, 1.0 );
+                    vNormalW = normalize( vec3( modelMatrix * vec4( objectNormal, 0.0 ) ) );
+                    vViewDirW = normalize( cameraPosition - localWorldPosition.xyz );
+                    `
                 );
 
-                shader.fragmentShader = `
-          uniform float uRgbIntensity;
-          uniform float uFresnelPower;
-          uniform float uTime;
-          varying vec3 vNormalW;
-          varying vec3 vViewDirW;
-          ${shader.fragmentShader}
-        `.replace(
-                    `#include <dithering_fragment>`,
-                    `#include <dithering_fragment>
-          float fresnel = pow(1.0 - max(dot(vNormalW, vViewDirW), 0.0), uFresnelPower);
-          vec3 shift;
-          shift.r = fresnel * abs(sin(vNormalW.x * 5.0 + uTime * 0.5));
-          shift.g = fresnel * abs(sin(vNormalW.y * 5.0 + uTime * 0.6 + 2.0));
-          shift.b = fresnel * abs(sin(vNormalW.z * 5.0 + uTime * 0.7 + 4.2));
-          gl_FragColor.rgb += shift * uRgbIntensity;
-          `
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    'void main() {',
+                    `
+                    uniform float uRgbIntensity;
+                    uniform float uFresnelPower;
+                    uniform float uTime;
+                    varying vec3 vNormalW;
+                    varying vec3 vViewDirW;
+                    void main() {
+                    `
+                ).replace(
+                    '#include <dithering_fragment>',
+                    `
+                    #include <dithering_fragment>
+                    float fresnel = pow(1.0 - max(dot(vNormalW, vViewDirW), 0.0), uFresnelPower);
+                    vec3 shift;
+                    shift.r = fresnel * abs(sin(vNormalW.x * 5.0 + uTime * 0.5));
+                    shift.g = fresnel * abs(sin(vNormalW.y * 5.0 + uTime * 0.6 + 2.0));
+                    shift.b = fresnel * abs(sin(vNormalW.z * 5.0 + uTime * 0.7 + 4.2));
+                    gl_FragColor.rgb += shift * uRgbIntensity;
+                    `
                 );
             };
 
             mesh = new THREE.Mesh(geometry, material);
+            if (prevTransform) {
+                mesh.rotation.copy(prevTransform.rotation);
+                mesh.position.copy(prevTransform.position);
+            }
             scene.add(mesh);
             setTimeout(() => loading.style.display = 'none', 100);
-        }
-
-        function setMaterial(hex, roughness) {
-            if (mesh) {
-                mesh.material.color.set(hex);
-                mesh.material.roughness = roughness;
-                const rr = document.getElementById('rough-range');
-                if (rr) rr.value = roughness;
-                const rv = document.getElementById('rough-val');
-                if (rv) rv.innerText = roughness.toFixed(2);
-            }
         }
 
         function animate() {
@@ -505,108 +578,44 @@
 
         let isDragging = false, isPanning = false, prevMouse = { x: 0, y: 0 };
         function setupInteractions() {
-            const startMove = (e) => {
-                // e.button === 0 は左クリックを意味します
+            canvas.onmousedown = (e) => {
                 if (e.button === 0) {
-                    if (e.shiftKey) { // Shiftキーを押しながらドラッグでパン
-                        isPanning = true;
-                    } else { // 通常のドラッグで回転
-                        isDragging = true;
-                    }
+                    if (e.shiftKey) isPanning = true; else isDragging = true;
                     prevMouse = { x: e.clientX, y: e.clientY };
                 }
             };
-
-            const endMove = () => {
-                isDragging = false;
-                isPanning = false;
-            };
-
-            const move = (e) => {
-                if (mesh) {
-                    const deltaX = e.clientX - prevMouse.x;
-                    const deltaY = e.clientY - prevMouse.y;
-
-                    if (isDragging) {
-                        mesh.rotation.y += deltaX * 0.01;
-                        mesh.rotation.x += deltaY * 0.01;
-                    } else if (isPanning) {
-                        // パン操作の感度を調整
-                        mesh.position.x += deltaX * 0.05;
-                        mesh.position.y -= deltaY * 0.05; // Y軸は上下反転
-                    }
+            window.onmouseup = () => { isDragging = false; isPanning = false; };
+            canvas.onmousemove = (e) => {
+                if (mesh && (isDragging || isPanning)) {
+                    const dx = e.clientX - prevMouse.x, dy = e.clientY - prevMouse.y;
+                    if (isDragging) { mesh.rotation.y += dx * 0.01; mesh.rotation.x += dy * 0.01; }
+                    else { mesh.position.x += dx * 0.05; mesh.position.y -= dy * 0.05; }
                     prevMouse = { x: e.clientX, y: e.clientY };
                 }
             };
-
-            canvas.onmousedown = startMove;
-            window.onmouseup = endMove;
-            canvas.onmousemove = move;
-
-            // タッチイベントはShiftキーがないため、常に回転として扱う
-            canvas.ontouchstart = (e) => {
-                if (e.touches.length === 1) {
-                    isDragging = true; // タッチイベントは常に回転
-                    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                }
-            };
-            canvas.ontouchend = endMove;
-            canvas.ontouchmove = (e) => {
-                if (e.touches.length === 1) {
-                    if (isDragging && mesh) { // タッチイベントは回転のみ
-                        const deltaX = e.touches[0].clientX - prevMouse.x;
-                        const deltaY = e.touches[0].clientY - prevMouse.y;
-                        mesh.rotation.y += deltaX * 0.01;
-                        mesh.rotation.x += deltaY * 0.01;
-                        prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                    }
-                }
-            };
-
-            // Wheel zoom support
-            canvas.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                updateZoom(targetZ + e.deltaY * 0.05);
-            }, { passive: false });
-
-
-            const zr = document.getElementById('zoom-range');
-            if (zr) zr.oninput = (e) => { updateZoom(parseFloat(e.target.value)); };
-
-            const rr = document.getElementById('rough-range');
-            if (rr) rr.oninput = (e) => {
+            canvas.addEventListener('wheel', (e) => { e.preventDefault(); updateZoom(targetZ + e.deltaY * 0.05); }, { passive: false });
+            document.getElementById('zoom-range').oninput = (e) => updateZoom(parseFloat(e.target.value));
+            document.getElementById('rough-range').oninput = (e) => {
                 const val = parseFloat(e.target.value);
-                const rv = document.getElementById('rough-val');
-                if (rv) rv.innerText = val.toFixed(2);
+                document.getElementById('rough-val').innerText = val.toFixed(2);
                 if (mesh) mesh.material.roughness = val;
             };
-
-            const dr = document.getElementById('depth-range');
-            if (dr) dr.oninput = (e) => {
-                const dv = document.getElementById('depth-val');
-                if (dv) dv.innerText = e.target.value;
+            document.getElementById('depth-range').oninput = (e) => { document.getElementById('depth-val').innerText = e.target.value; };
+            document.getElementById('rgb-range').oninput = (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById('rgb-val').innerText = val.toFixed(1);
+                uniforms.uRgbIntensity.value = val;
             };
-
-            const rgbRange = document.getElementById('rgb-range');
-            if (rgbRange) {
-                rgbRange.oninput = (e) => {
-                    const val = parseFloat(e.target.value);
-                    document.getElementById('rgb-val').innerText = val.toFixed(1);
-                    uniforms.uRgbIntensity.value = val;
-                };
-            }
-
-            const fs = document.getElementById('font-select');
-            if (fs) fs.onchange = (e) => loadFont(e.target.value);
-
-            const rb = document.getElementById('regen-btn');
-            if (rb) rb.onclick = generate;
-
-            const ss = document.getElementById('shape-select');
-            if (ss) ss.onchange = generate;
-
-            const db = document.getElementById('download-btn');
-            if (db) db.onclick = () => {
+            document.getElementById('material-select').onchange = () => { updatePresetsUI(); generate(); };
+            document.getElementById('font-select').onchange = (e) => loadFont(e.target.value);
+            document.getElementById('regen-btn').onclick = generate;
+            document.getElementById('shape-select').onchange = generate;
+            document.getElementById('bg-toggle').onchange = () => {
+                const isLight = document.getElementById('bg-toggle').checked;
+                renderer.setClearColor(isLight ? 0xcccccc : 0x000000, isLight ? 1 : 0);
+                generate();
+            };
+            document.getElementById('download-btn').onclick = () => {
                 const link = document.createElement('a');
                 link.download = `logo-3d-${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
