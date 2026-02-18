@@ -254,8 +254,8 @@
             </div>
             <div>
                 <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Texture Scale
-                    <span id="tex-scale-val">1.0</span></label>
-                <input type="range" id="tex-scale-range" min="0.1" max="10.0" step="0.1" value="1.0" class="w-full">
+                    <span id="tex-scale-val">5.0</span></label>
+                <input type="range" id="tex-scale-range" min="0.1" max="10.0" step="0.1" value="5.0" class="w-full">
             </div>
         </div>
 
@@ -528,6 +528,7 @@
                     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
                     tex.repeat.set(0.05, 0.05); // Adjust for logo scale
                     tex.encoding = THREE.sRGBEncoding; // Fix: Set encoding to match renderer
+                    tex.flipY = false; // Fix: Prevent texture from appearing upside down
                     textures[url] = tex;
                     resolve(tex);
                 }, undefined, (err) => {
@@ -624,16 +625,16 @@
                 selectedTexture.repeat.set(repeatVal, repeatVal);
             }
 
-            // Fix: If texture is active, use white base color to prevent darkening
-            const baseColor = selectedTexture ? 0xffffff : (mesh ? mesh.material.color : 0xffcc33);
+            // Fix: If texture is active, use light gray base color to prevent over-exposure
+            const baseColor = selectedTexture ? 0xbbbbbb : (mesh ? mesh.material.color : 0xffcc33);
 
             const matProps = {
                 color: baseColor,
                 roughness: parseFloat(document.getElementById('rough-range').value),
                 envMap: currentEnvMap,
-                envMapIntensity: selectedTexture ? envIntensity * 2.5 : envIntensity, // Dramatically boost envMap if textured
+                envMapIntensity: selectedTexture ? envIntensity * 1.2 : envIntensity, // Reduced boost to fix washout
                 map: selectedTexture,
-                emissive: selectedTexture ? 0x222222 : 0x000000,
+                emissive: 0x000000, // Removed emissive glow to prevent detail loss
                 emissiveMap: selectedTexture
             };
 
