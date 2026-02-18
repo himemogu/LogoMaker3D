@@ -204,7 +204,8 @@
                     </optgroup>
                     <optgroup label="Debug">
                         <option value="https://threejs.org/examples/textures/uv_grid_opengl.jpg">UV Grid</option>
-                        <option value="https://threejs.org/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg">Checkerboard</option>
+                        <option value="https://threejs.org/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg">
+                            Checkerboard</option>
                     </optgroup>
                 </select>
             </div>
@@ -252,8 +253,8 @@
                 <input type="range" id="bloom-range" min="0" max="5.0" step="0.01" value="0" class="w-full">
             </div>
             <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Texture Scale <span
-                        id="tex-scale-val">1.0</span></label>
+                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Texture Scale
+                    <span id="tex-scale-val">1.0</span></label>
                 <input type="range" id="tex-scale-range" min="0.1" max="10.0" step="0.1" value="1.0" class="w-full">
             </div>
         </div>
@@ -265,6 +266,14 @@
             <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700">
                 <span class="text-[10px] text-slate-400 font-bold uppercase">Auto Rotation</span>
                 <input type="checkbox" id="rotate-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
+            </div>
+            <div>
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Environment (Lighting)</label>
+                <select id="env-select"
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                    <option value="environments/university_workshop_1k.hdr">University Workshop (Standard)</option>
+                    <option value="environments/royal_esplanade_1k.hdr">Royal Esplanade (Vibrant)</option>
+                </select>
             </div>
             <div>
                 <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Background Style</label>
@@ -457,18 +466,23 @@
 
         function createStudioEnv() {
             const rgbeLoader = new THREE.RGBELoader();
+            const envUrl = document.getElementById('env-select').value;
+            
             document.getElementById('loading-text').innerText = "Loading Environment...";
             loading.style.display = 'flex';
 
-            rgbeLoader.load('./university_workshop_1k.hdr', (texture) => {
+            rgbeLoader.load(envUrl, (texture) => {
                 currentEnvMap = pmremGenerator.fromEquirectangular(texture).texture;
                 scene.environment = currentEnvMap;
                 scene.background = null; // Ensure transparency
                 renderer.setClearColor(0x000000, 0);
                 texture.dispose();
-                // pmremGenerator.dispose(); // Do not dispose, it might be needed for subsequent calls if envMap changes
+                
                 const fs = document.getElementById('font-select');
                 if (fs) loadFont(fs.value); else generate();
+            }, undefined, (err) => {
+                console.error("HDR loading failed:", envUrl, err);
+                loading.style.display = 'none';
             });
         }
 
@@ -527,7 +541,7 @@
         async function generate() {
             if (!currentFont || !currentEnvMap || isGenerating) return;
             isGenerating = true;
-            
+
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Generating 3D model...";
 
@@ -606,7 +620,7 @@
             if (selectedTexture) {
                 const scale = parseFloat(document.getElementById('tex-scale-range').value);
                 // Inverse relationship: higher scale slider = lower repeat value = larger texture
-                const repeatVal = 1 / (scale * 20); 
+                const repeatVal = 1 / (scale * 20);
                 selectedTexture.repeat.set(repeatVal, repeatVal);
             }
 
@@ -619,7 +633,7 @@
                 envMap: currentEnvMap,
                 envMapIntensity: selectedTexture ? envIntensity * 2.5 : envIntensity, // Dramatically boost envMap if textured
                 map: selectedTexture,
-                emissive: selectedTexture ? 0x222222 : 0x000000, 
+                emissive: selectedTexture ? 0x222222 : 0x000000,
                 emissiveMap: selectedTexture
             };
 
@@ -861,6 +875,7 @@
             document.getElementById('backdrop-color-1').oninput = updateBackdrop;
             document.getElementById('backdrop-color-2').oninput = updateBackdrop;
             document.getElementById('bg-style-select').onchange = updateBackgroundStyle;
+            document.getElementById('env-select').onchange = createStudioEnv;
             document.getElementById('material-select').onchange = () => { updatePresetsUI(); generate(); };
             document.getElementById('texture-select').onchange = generate;
             document.getElementById('font-select').onchange = (e) => loadFont(e.target.value);
