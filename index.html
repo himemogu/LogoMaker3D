@@ -197,14 +197,19 @@
                 <input type="range" id="depth-range" min="0.1" max="10.0" step="0.1" value="2.0" class="w-full">
             </div>
             <div>
+                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Spacing <span
+                        id="spacing-val">0</span></label>
+                <input type="range" id="spacing-range" min="-50" max="100" step="1" value="0" class="w-full">
+            </div>
+            <div>
                 <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Zoom <span
                         id="zoom-val">45</span></label>
                 <input type="range" id="zoom-range" min="15" max="150" step="1" value="45" class="w-full">
             </div>
             <div>
                 <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Bloom <span
-                        id="bloom-val">0.8</span></label>
-                <input type="range" id="bloom-range" min="0" max="5.0" step="0.01" value="0.8" class="w-full">
+                        id="bloom-val">0.4</span></label>
+                <input type="range" id="bloom-range" min="0" max="5.0" step="0.01" value="0.4" class="w-full">
             </div>
         </div>
 
@@ -216,10 +221,39 @@
                 <span class="text-[10px] text-slate-400 font-bold uppercase">Auto Rotation</span>
                 <input type="checkbox" id="rotate-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
             </div>
-
-            <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700">
-                <span class="text-[10px] text-slate-400 font-bold uppercase">Show Backdrop</span>
-                <input type="checkbox" id="backdrop-toggle" class="w-4 h-4 accent-indigo-500 cursor-pointer">
+            <div>
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Background Style</label>
+                <select id="bg-style-select"
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                    <option value="transparent">Transparent (Export Mode)</option>
+                    <option value="white">Solid White</option>
+                    <option value="dark">Dark Slate</option>
+                    <option value="midnight">Midnight Blue</option>
+                    <option value="gradient-soft">Soft Light Gradient</option>
+                    <option value="gradient-dark">Deep Dark Gradient</option>
+                    <option value="gradient-gold">Royal Gold Gradient</option>
+                </select>
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Backdrop (3D Plane)</label>
+                <select id="backdrop-style-select"
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                    <option value="none">None</option>
+                    <option value="grid">Cyber Grid</option>
+                    <option value="solid">Solid Color</option>
+                    <option value="gradient-linear">Linear Gradient</option>
+                    <option value="gradient-radial">Radial Glow</option>
+                </select>
+                <div id="backdrop-color-controls" class="hidden grid grid-cols-2 gap-2">
+                    <div class="flex flex-col">
+                        <span class="text-[8px] text-slate-500 uppercase mb-1">Color 1</span>
+                        <input type="color" id="backdrop-color-1" value="#1e293b" class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
+                    </div>
+                    <div id="backdrop-color-2-container" class="flex flex-col">
+                        <span class="text-[8px] text-slate-500 uppercase mb-1">Color 2</span>
+                        <input type="color" id="backdrop-color-2" value="#0f172a" class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
+                    </div>
+                </div>
             </div>
             <div class="pt-2 space-y-3">
                 <button id="regen-btn"
@@ -314,14 +348,14 @@
             // Setup post-processing for Bloom
             const renderScene = new THREE.RenderPass(scene, camera);
             // Parameters: resolution, strength, radius, threshold
-            bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(1280, 720), 0.8, 1.0, 0.2);
+            bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(1280, 720), 0.4, 1.0, 0.5);
             
             composer = new THREE.EffectComposer(renderer);
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
 
             createStudioEnv(); // Start async loading of HDRI and then fonts
-            createBackdrop();
+            updateBackdrop();
             updatePresetsUI();
             setupInteractions();
             animate();
@@ -344,39 +378,6 @@
                 container.appendChild(btn);
             });
             if (presets.length > 0) applyPreset(presets[0]);
-        }
-
-        function createBackdrop() {
-            const size = 512;
-            const canvas = document.createElement('canvas');
-            canvas.width = size; canvas.height = size;
-            const ctx = canvas.getContext('2d');
-            const grad = ctx.createLinearGradient(0, 0, size, size);
-            grad.addColorStop(0, '#0f172a'); grad.addColorStop(1, '#1e1b4b');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, size, size);
-            ctx.fillStyle = '#312e81';
-            const cellSize = size / 8;
-            for (let y = 0; y < 8; y++) {
-                for (let x = 0; x < 8; x++) {
-                    if ((x + y) % 2 === 0) ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-                }
-            }
-            ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 4;
-            ctx.strokeRect(0, 0, size, size);
-            for (let i = 0; i <= size; i += cellSize * 2) {
-                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, size);
-                ctx.moveTo(0, i); ctx.lineTo(size, i); ctx.stroke();
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(4, 4);
-            const geometry = new THREE.PlaneGeometry(240, 240);
-            const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.8 });
-            backdrop = new THREE.Mesh(geometry, material);
-            backdrop.position.z = -100;
-            backdrop.visible = false;
-            scene.add(backdrop);
         }
 
         function getContrastYIQ(hexcolor) {
@@ -472,13 +473,17 @@
                         geometry = new THREE.BoxGeometry(1, 1, 1);
                     } else {
                         const fontSize = 100;
+                        const spacing = parseFloat(document.getElementById('spacing-range').value);
                         const shapes = [];
+                        let currentX = 0;
+                        
                         for (let i = 0; i < text.length; i++) {
-                            const path = currentFont.font.getPath(text[i], 0, 0, fontSize);
-                            const charWidth = path.getBoundingBox().x2 - path.getBoundingBox().x1;
-                            const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="${charWidth}" height="${fontSize}"><path transform="translate(${i * fontSize * 0.9}, 0)" d="${path.toPathData(1)}" /></svg>`;
-                            const data = svgLoader.parse(svgMarkup);
+                            const path = currentFont.font.getPath(text[i], currentX, 0, fontSize);
+                            const data = svgLoader.parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${path.toPathData(2)}" /></svg>`);
                             data.paths.forEach(p => shapes.push(...p.toShapes(true)));
+                            
+                            // Calculate next character position using actual font advance width + user spacing
+                            currentX += currentFont.font.getAdvanceWidth(text[i], fontSize) + spacing;
                         }
                         geometry = new THREE.ExtrudeGeometry(shapes, { steps: 1, depth: depthVal * 4, bevelEnabled: true, bevelThickness: 5.0, bevelSize: 2.0, bevelOffset: 0, bevelSegments: 4 });
                         geometry.rotateX(Math.PI);
@@ -529,7 +534,9 @@
                 material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, reflectance: 0.2 });
             }
 
-            if (backdrop) backdrop.visible = document.getElementById('backdrop-toggle').checked;
+            if (backdrop) {
+                // Visibility is handled by updateBackdrop
+            }
 
             material.onBeforeCompile = (shader) => {
                 shader.uniforms.uRgbIntensity = uniforms.uRgbIntensity;
@@ -560,6 +567,107 @@
             } else {
                 renderer.render(scene, camera);
             }
+        }
+
+        function updateBackgroundStyle() {
+            const style = document.getElementById('bg-style-select').value;
+            renderer.setClearColor(0x000000, 0); // Reset alpha
+
+            if (style === 'transparent') {
+                scene.background = null;
+            } else if (style === 'white') {
+                scene.background = new THREE.Color(0xffffff);
+                renderer.setClearColor(0xffffff, 1);
+            } else if (style === 'dark') {
+                scene.background = new THREE.Color(0x1e293b);
+                renderer.setClearColor(0x1e293b, 1);
+            } else if (style === 'midnight') {
+                scene.background = new THREE.Color(0x0f172a);
+                renderer.setClearColor(0x0f172a, 1);
+            } else if (style.startsWith('gradient-')) {
+                const size = 512;
+                const canvas = document.createElement('canvas');
+                canvas.width = 1; canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                const grad = ctx.createLinearGradient(0, 0, 0, size);
+                
+                if (style === 'gradient-soft') {
+                    grad.addColorStop(0, '#f3f4f6'); grad.addColorStop(1, '#ffffff');
+                } else if (style === 'gradient-dark') {
+                    grad.addColorStop(0, '#1e1b4b'); grad.addColorStop(1, '#020617');
+                } else if (style === 'gradient-gold') {
+                    grad.addColorStop(0, '#451a03'); grad.addColorStop(1, '#000000');
+                }
+                
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 1, size);
+                scene.background = new THREE.CanvasTexture(canvas);
+                renderer.setClearColor(0x000000, 1);
+            }
+        }
+
+        function updateBackdrop() {
+            const style = document.getElementById('backdrop-style-select').value;
+            const controls = document.getElementById('backdrop-color-controls');
+            const c2Container = document.getElementById('backdrop-color-2-container');
+            
+            if (style === 'none') {
+                if (backdrop) backdrop.visible = false;
+                controls.classList.add('hidden');
+                return;
+            }
+
+            controls.classList.remove('hidden');
+            const color1 = document.getElementById('backdrop-color-1').value;
+            const color2 = document.getElementById('backdrop-color-2').value;
+
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            if (style === 'grid') {
+                c2Container.classList.remove('hidden');
+                ctx.fillStyle = color2;
+                ctx.fillRect(0, 0, size, size);
+                ctx.strokeStyle = color1;
+                ctx.lineWidth = 2;
+                const cellSize = size / 16;
+                for (let i = 0; i <= size; i += cellSize) {
+                    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, size); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(size, i); ctx.stroke();
+                }
+            } else if (style === 'solid') {
+                c2Container.classList.add('hidden');
+                ctx.fillStyle = color1;
+                ctx.fillRect(0, 0, size, size);
+            } else if (style === 'gradient-linear') {
+                c2Container.classList.remove('hidden');
+                const grad = ctx.createLinearGradient(0, 0, 0, size);
+                grad.addColorStop(0, color1); grad.addColorStop(1, color2);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, size, size);
+            } else if (style === 'gradient-radial') {
+                c2Container.classList.remove('hidden');
+                const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+                grad.addColorStop(0, color1); grad.addColorStop(1, color2);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, size, size);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            if (!backdrop) {
+                const geometry = new THREE.PlaneGeometry(300, 300);
+                const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.9 });
+                backdrop = new THREE.Mesh(geometry, material);
+                backdrop.position.z = -80;
+                scene.add(backdrop);
+            } else {
+                if (backdrop.material.map) backdrop.material.map.dispose();
+                backdrop.material.map = texture;
+                backdrop.material.needsUpdate = true;
+            }
+            backdrop.visible = true;
         }
 
         function updateZoom(val) {
@@ -594,6 +702,10 @@
                 document.getElementById('rough-val').innerText = val.toFixed(2);
                 if (mesh) mesh.material.roughness = val;
             };
+            document.getElementById('spacing-range').oninput = (e) => {
+                document.getElementById('spacing-val').innerText = e.target.value;
+                generate();
+            };
             document.getElementById('depth-range').oninput = (e) => { document.getElementById('depth-val').innerText = e.target.value; generate(); };
             document.getElementById('bloom-range').oninput = (e) => {
                 const val = parseFloat(e.target.value);
@@ -605,7 +717,10 @@
                 document.getElementById('rgb-val').innerText = val.toFixed(1);
                 uniforms.uRgbIntensity.value = val;
             };
-            document.getElementById('backdrop-toggle').onchange = (e) => { if (backdrop) backdrop.visible = e.target.checked; };
+            document.getElementById('backdrop-style-select').onchange = updateBackdrop;
+            document.getElementById('backdrop-color-1').oninput = updateBackdrop;
+            document.getElementById('backdrop-color-2').oninput = updateBackdrop;
+            document.getElementById('bg-style-select').onchange = updateBackgroundStyle;
             document.getElementById('material-select').onchange = () => { updatePresetsUI(); generate(); };
             document.getElementById('font-select').onchange = (e) => loadFont(e.target.value);
             document.getElementById('regen-btn').onclick = generate;
