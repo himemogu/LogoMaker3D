@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/SVGLoader.js"></script>
+    <script src="https://raw.githack.com/mrdoob/three.js/r128/examples/js/loaders/RGBELoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
     <style>
         canvas {
@@ -18,8 +19,6 @@
             object-fit: contain;
             cursor: grab;
             touch-action: none;
-            background-image: radial-gradient(#2d3748 1px, transparent 1px);
-            background-size: 20px 20px;
         }
 
         canvas:active {
@@ -233,10 +232,10 @@
 
         const materialPresets = {
             metallic: [
-                { name: 'Gold', color: '#ffcc33', rough: 0.18, metal: 1.0 },
-                { name: 'Silver', color: '#ffffff', rough: 0.05, metal: 1.0 },
-                { name: 'Platinum', color: '#d1d5db', rough: 0.15, metal: 1.0 },
-                { name: 'Copper', color: '#b87333', rough: 0.35, metal: 1.0 }
+                { name: 'Gold', color: '#ffcc33', rough: 0, metal: 1.0 },
+                { name: 'Silver', color: '#f8f9fa', rough: 0.02, metal: 1.0 },
+                { name: 'Platinum', color: '#b0b0b0', rough: 0.08, metal: 1.0 },
+                { name: 'Copper', color: '#b87333', rough: 0.20, metal: 1.0 }
             ],
             glass: [
                 { name: 'Clear', color: '#ffffff', rough: 0.0, transmission: 1.0, ior: 1.5 },
@@ -274,14 +273,11 @@
         function initThree() {
             scene = new THREE.Scene();
 
-            // Direct illumination to support diffuse materials like Cloth
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
             scene.add(ambientLight);
-
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
             dirLight.position.set(30, 40, 50);
             scene.add(dirLight);
-
             const fillLight = new THREE.PointLight(0xffffff, 0.3);
             fillLight.position.set(-30, -20, 30);
             scene.add(fillLight);
@@ -295,19 +291,15 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.setSize(1280, 720);
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.0;
+            renderer.toneMappingExposure = 0.6; // Lowered from 1.0
             renderer.outputEncoding = THREE.sRGBEncoding;
 
             pmremGenerator = new THREE.PMREMGenerator(renderer);
             pmremGenerator.compileEquirectangularShader();
 
-            createStudioEnv();
+            createStudioEnv(); // Start async loading of HDRI and then fonts
             createBackdrop();
-            updatePresetsUI(); // Initialize presets UI
-
-            const fs = document.getElementById('font-select');
-            if (fs) loadFont(fs.value);
-
+            updatePresetsUI();
             setupInteractions();
             animate();
         }
@@ -316,10 +308,8 @@
             const type = document.getElementById('material-select').value;
             const container = document.getElementById('material-presets');
             const label = document.getElementById('presets-label');
-
             label.innerText = `${type.charAt(0).toUpperCase() + type.slice(1)} Presets`;
             container.innerHTML = '';
-
             const presets = materialPresets[type];
             presets.forEach(p => {
                 const btn = document.createElement('button');
@@ -330,61 +320,38 @@
                 btn.onclick = () => applyPreset(p);
                 container.appendChild(btn);
             });
-
-            // Auto-apply first preset on type change
             if (presets.length > 0) applyPreset(presets[0]);
         }
 
         function createBackdrop() {
-            // Create a procedural vibrant grid for refraction testing
             const size = 512;
             const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
+            canvas.width = size; canvas.height = size;
             const ctx = canvas.getContext('2d');
-
-            // vibrant background gradient
             const grad = ctx.createLinearGradient(0, 0, size, size);
-            grad.addColorStop(0, '#0f172a');
-            grad.addColorStop(1, '#1e1b4b');
+            grad.addColorStop(0, '#0f172a'); grad.addColorStop(1, '#1e1b4b');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, size, size);
-
-            // Draw vibrant grid
             ctx.fillStyle = '#312e81';
             const cellSize = size / 8;
             for (let y = 0; y < 8; y++) {
                 for (let x = 0; x < 8; x++) {
-                    if ((x + y) % 2 === 0) {
-                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-                    }
+                    if ((x + y) % 2 === 0) ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
                 }
             }
-            // Add glowing highlight lines
-            ctx.strokeStyle = '#4f46e5';
-            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 4;
             ctx.strokeRect(0, 0, size, size);
             for (let i = 0; i <= size; i += cellSize * 2) {
-                ctx.beginPath();
-                ctx.moveTo(i, 0); ctx.lineTo(i, size);
-                ctx.moveTo(0, i); ctx.lineTo(size, i);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, size);
+                ctx.moveTo(0, i); ctx.lineTo(size, i); ctx.stroke();
             }
-
             const texture = new THREE.CanvasTexture(canvas);
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
+            texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping;
             texture.repeat.set(4, 4);
-
             const geometry = new THREE.PlaneGeometry(240, 240);
-            const material = new THREE.MeshBasicMaterial({
-                map: texture,
-                transparent: true,
-                opacity: 0.8 // Increased opacity for vibrancy
-            });
-
+            const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.8 });
             backdrop = new THREE.Mesh(geometry, material);
-            backdrop.position.z = -25; // Slightly further back for depth
+            backdrop.position.z = -100;
             backdrop.visible = false;
             scene.add(backdrop);
         }
@@ -399,17 +366,28 @@
         }
 
         function applyPreset(p) {
-            const type = document.getElementById('material-select').value;
             const rr = document.getElementById('rough-range');
             const rv = document.getElementById('rough-val');
-
             if (rr) rr.value = p.rough;
             if (rv) rv.innerText = p.rough.toFixed(2);
+            generate();
+            if (mesh) mesh.material.color.set(p.color);
+        }
 
-            generate(); // Regenerate to apply all properties
-            if (mesh) {
-                mesh.material.color.set(p.color);
-            }
+        function createStudioEnv() {
+            const rgbeLoader = new THREE.RGBELoader();
+            document.getElementById('loading-text').innerText = "Loading Environment...";
+            loading.style.display = 'flex';
+
+            rgbeLoader.load('./university_workshop_1k.hdr', (texture) => {
+                currentEnvMap = pmremGenerator.fromEquirectangular(texture).texture;
+                scene.environment = currentEnvMap;
+                updateBackground(); // Set initial background
+                texture.dispose();
+                // pmremGenerator.dispose(); // Do not dispose, it might be needed for subsequent calls if envMap changes
+                const fs = document.getElementById('font-select');
+                if (fs) loadFont(fs.value); else generate();
+            });
         }
 
         async function loadFont(fontPath) {
@@ -418,14 +396,10 @@
                 generate();
                 return;
             }
-
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Loading Font...";
-
             try {
-                let loadedFont;
-                let fontType;
-
+                let loadedFont, fontType;
                 if (fontPath.endsWith('.ttf')) {
                     const response = await fetch(fontPath);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -433,17 +407,13 @@
                     loadedFont = opentype.parse(buffer);
                     fontType = 'opentype';
                 } else {
-                    let url = fontPath.startsWith('http') ? `${fontPath}.typeface.json` : `https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/${fontPath}.typeface.json`;
-                    loadedFont = await new Promise((resolve, reject) => {
-                        fontLoader.load(url, resolve, undefined, reject);
-                    });
+                    const url = fontPath.startsWith('http') ? `${fontPath}.typeface.json` : `https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/${fontPath}.typeface.json`;
+                    loadedFont = await new Promise((res, rej) => fontLoader.load(url, res, undefined, rej));
                     fontType = 'threejs';
                 }
-
                 fonts[fontPath] = { font: loadedFont, type: fontType };
                 currentFont = fonts[fontPath];
                 generate();
-
             } catch (err) {
                 console.error("Font loading failed:", err);
                 loading.style.display = 'none';
@@ -453,37 +423,14 @@
             }
         }
 
-        function createStudioEnv() {
-            const envScene = new THREE.Scene();
-            // Use high-intensity colors for fake HDR effect in PMREM
-            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            const brightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-
-            const lights = [
-                { pos: [0, 50, -20], rot: [Math.PI / 2, 0, 0], scale: [20, 100], mat: brightMat },
-                { pos: [-50, 0, 10], rot: [0, Math.PI / 2, 0], scale: [100, 40], mat: lightMat },
-                { pos: [50, 0, 10], rot: [0, -Math.PI / 2, 0], scale: [100, 40], mat: lightMat },
-                { pos: [0, -50, 10], rot: [-Math.PI / 2, 0, 0], scale: [100, 20], mat: lightMat }
-            ];
-            lights.forEach(l => {
-                const p = new THREE.Mesh(new THREE.PlaneGeometry(...l.scale), l.mat);
-                p.position.set(...l.pos); p.rotation.set(...l.rot);
-                envScene.add(p);
-            });
-            currentEnvMap = pmremGenerator.fromScene(envScene).texture;
-        }
-
         function generate() {
-            if (!currentFont) return;
+            if (!currentFont || !currentEnvMap) return;
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Generating 3D model...";
 
             let prevTransform = null;
             if (mesh) {
-                prevTransform = {
-                    rotation: mesh.rotation.clone(),
-                    position: mesh.position.clone()
-                };
+                prevTransform = { rotation: mesh.rotation.clone(), position: mesh.position.clone() };
                 scene.remove(mesh);
                 if (mesh.geometry) mesh.geometry.dispose();
                 if (mesh.material) mesh.material.dispose();
@@ -519,18 +466,13 @@
             } else {
                 const shape = new THREE.Shape();
                 const w = 16, d = 8, h = 3.0, r = 1.0;
-                shape.moveTo(-w / 2 + r, -d / 2);
-                shape.lineTo(w / 2 - r, -d / 2);
-                shape.quadraticCurveTo(w / 2, -d / 2, w / 2, -d / 2 + r);
-                shape.lineTo(w / 2, d / 2 - r);
-                shape.quadraticCurveTo(w / 2, d / 2, w / 2 - r, d / 2);
-                shape.lineTo(-w / 2 + r, d / 2);
-                shape.quadraticCurveTo(-w / 2, d / 2, -w / 2, d / 2 - r);
-                shape.lineTo(-w / 2, -d / 2 + r);
+                shape.moveTo(-w / 2 + r, -d / 2); shape.lineTo(w / 2 - r, -d / 2);
+                shape.quadraticCurveTo(w / 2, -d / 2, w / 2, -d / 2 + r); shape.lineTo(w / 2, d / 2 - r);
+                shape.quadraticCurveTo(w / 2, d / 2, w / 2 - r, d / 2); shape.lineTo(-w / 2 + r, d / 2);
+                shape.quadraticCurveTo(-w / 2, d / 2, -w / 2, d / 2 - r); shape.lineTo(-w / 2, -d / 2 + r);
                 shape.quadraticCurveTo(-w / 2, -d / 2, -w / 2 + r, -d / 2);
                 geometry = new THREE.ExtrudeGeometry(shape, { steps: 1, depth: h, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 8 });
-                geometry.rotateX(-Math.PI / 2);
-                geometry.center();
+                geometry.rotateX(-Math.PI / 2); geometry.center();
             }
 
             geometry.computeBoundingBox();
@@ -539,10 +481,9 @@
             const maxD = Math.max(bSize.x, bSize.y, bSize.z);
             if (maxD > 35) geometry.scale(35 / maxD, 35 / maxD, 35 / maxD);
 
-            // Configure Material based on type
-            let envIntensity = 1.0; // Default for diffuse materials (Wood, Cloth, Plastic)
-            if (materialType === 'metallic') envIntensity = 4.0;
-            if (materialType === 'glass') envIntensity = 2.0;
+            let envIntensity = 0.8;
+            if (materialType === 'metallic') envIntensity = 1.2;
+            if (materialType === 'glass') envIntensity = 0.8;
 
             const matProps = {
                 color: mesh ? mesh.material.color : 0xffcc33,
@@ -552,86 +493,26 @@
             };
 
             let material;
-            const isLightBg = document.getElementById('bg-toggle') && document.getElementById('bg-toggle').checked;
-
             if (materialType === 'glass') {
-                material = new THREE.MeshPhysicalMaterial({
-                    ...matProps,
-                    metalness: 0.1,
-                    transmission: 1.0,
-                    ior: 1.52,
-                    thickness: 3.0,
-                    transparent: true,
-                    opacity: 1,
-                    clearcoat: 1.0,
-                    clearcoatRoughness: 0.05
-                });
-                if (!isLightBg) material.emissive.set(0x222222); // Help visibility on dark background
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0.1, transmission: 1.0, ior: 1.52, thickness: 3.0, transparent: true, opacity: 1, clearcoat: 1.0, clearcoatRoughness: 0.05 });
             } else if (materialType === 'metallic') {
                 material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 1.0 });
             } else if (materialType === 'plastic') {
                 material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, clearcoat: 1.0, clearcoatRoughness: 0.1 });
             } else if (materialType === 'cloth') {
-                // Natural cloth appearance with balanced lighting
-                material = new THREE.MeshPhysicalMaterial({
-                    ...matProps,
-                    color: new THREE.Color(matProps.color),
-                    metalness: 0,
-                    sheen: new THREE.Color(matProps.color).multiplyScalar(0.2) // Subtle sheen
-                });
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, sheen: new THREE.Color(matProps.color).multiplyScalar(0.2) });
             } else { // Wood
                 material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, reflectance: 0.2 });
             }
 
-            // Update backdrop
-            if (backdrop) {
-                backdrop.visible = document.getElementById('backdrop-toggle').checked;
-            }
+            if (backdrop) backdrop.visible = document.getElementById('backdrop-toggle').checked;
 
             material.onBeforeCompile = (shader) => {
                 shader.uniforms.uRgbIntensity = uniforms.uRgbIntensity;
                 shader.uniforms.uFresnelPower = uniforms.uFresnelPower;
                 shader.uniforms.uTime = uniforms.uTime;
-
-                shader.vertexShader = shader.vertexShader.replace(
-                    'void main() {',
-                    `
-                    varying vec3 vNormalW;
-                    varying vec3 vViewDirW;
-                    void main() {
-                    `
-                ).replace(
-                    '#include <worldpos_vertex>',
-                    `
-                    #include <worldpos_vertex>
-                    vec4 localWorldPosition = modelMatrix * vec4( transformed, 1.0 );
-                    vNormalW = normalize( vec3( modelMatrix * vec4( objectNormal, 0.0 ) ) );
-                    vViewDirW = normalize( cameraPosition - localWorldPosition.xyz );
-                    `
-                );
-
-                shader.fragmentShader = shader.fragmentShader.replace(
-                    'void main() {',
-                    `
-                    uniform float uRgbIntensity;
-                    uniform float uFresnelPower;
-                    uniform float uTime;
-                    varying vec3 vNormalW;
-                    varying vec3 vViewDirW;
-                    void main() {
-                    `
-                ).replace(
-                    '#include <dithering_fragment>',
-                    `
-                    #include <dithering_fragment>
-                    float fresnel = pow(1.0 - max(dot(vNormalW, vViewDirW), 0.0), uFresnelPower);
-                    vec3 shift;
-                    shift.r = fresnel * abs(sin(vNormalW.x * 5.0 + uTime * 0.5));
-                    shift.g = fresnel * abs(sin(vNormalW.y * 5.0 + uTime * 0.6 + 2.0));
-                    shift.b = fresnel * abs(sin(vNormalW.z * 5.0 + uTime * 0.7 + 4.2));
-                    gl_FragColor.rgb += shift * uRgbIntensity;
-                    `
-                );
+                shader.vertexShader = `varying vec3 vNormalW;\nvarying vec3 vViewDirW;\n` + shader.vertexShader.replace('#include <worldpos_vertex>', `#include <worldpos_vertex>\nvec4 localWorldPosition = modelMatrix * vec4( transformed, 1.0 );\nvNormalW = normalize( vec3( modelMatrix * vec4( objectNormal, 0.0 ) ) ) ;\nvViewDirW = normalize( cameraPosition - localWorldPosition.xyz );`);
+                shader.fragmentShader = `uniform float uRgbIntensity;\nuniform float uFresnelPower;\nuniform float uTime;\nvarying vec3 vNormalW;\nvarying vec3 vViewDirW;\n` + shader.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>\nfloat fresnel = pow(1.0 - max(dot(vNormalW, vViewDirW), 0.0), uFresnelPower);\nvec3 shift; shift.r = fresnel * abs(sin(vNormalW.x * 5.0 + uTime * 0.5));\nshift.g = fresnel * abs(sin(vNormalW.y * 5.0 + uTime * 0.6 + 2.0));\nshift.b = fresnel * abs(sin(vNormalW.z * 5.0 + uTime * 0.7 + 4.2));\ngl_FragColor.rgb += shift * uRgbIntensity;`);
             };
 
             mesh = new THREE.Mesh(geometry, material);
@@ -651,12 +532,21 @@
             if (mesh && rt && rt.checked && !isDragging) mesh.rotation.y += 0.005;
             renderer.render(scene, camera);
         }
+        
+        function updateBackground() {
+            const isLight = document.getElementById('bg-toggle').checked;
+            if (isLight) {
+                scene.background = new THREE.Color(0xcccccc);
+                renderer.setClearColor(0xcccccc, 1);
+            } else {
+                scene.background = null; // Set to null for transparency
+                renderer.setClearColor(0x000000, 0); // Transparent alpha
+            }
+        }
 
         function updateZoom(val) {
             targetZ = Math.max(15, Math.min(150, val));
-            const zr = document.getElementById('zoom-range');
             const zv = document.getElementById('zoom-val');
-            if (zr) zr.value = targetZ;
             if (zv) zv.innerText = Math.round(targetZ);
         }
 
@@ -684,24 +574,18 @@
                 document.getElementById('rough-val').innerText = val.toFixed(2);
                 if (mesh) mesh.material.roughness = val;
             };
-            document.getElementById('depth-range').oninput = (e) => { document.getElementById('depth-val').innerText = e.target.value; };
+            document.getElementById('depth-range').oninput = (e) => { document.getElementById('depth-val').innerText = e.target.value; generate(); };
             document.getElementById('rgb-range').oninput = (e) => {
                 const val = parseFloat(e.target.value);
                 document.getElementById('rgb-val').innerText = val.toFixed(1);
                 uniforms.uRgbIntensity.value = val;
             };
-            document.getElementById('backdrop-toggle').onchange = (e) => {
-                if (backdrop) backdrop.visible = e.target.checked;
-            };
+            document.getElementById('backdrop-toggle').onchange = (e) => { if (backdrop) backdrop.visible = e.target.checked; };
             document.getElementById('material-select').onchange = () => { updatePresetsUI(); generate(); };
             document.getElementById('font-select').onchange = (e) => loadFont(e.target.value);
             document.getElementById('regen-btn').onclick = generate;
             document.getElementById('shape-select').onchange = generate;
-            document.getElementById('bg-toggle').onchange = () => {
-                const isLight = document.getElementById('bg-toggle').checked;
-                renderer.setClearColor(isLight ? 0xcccccc : 0x000000, isLight ? 1 : 0);
-                generate();
-            };
+            document.getElementById('bg-toggle').onchange = () => { updateBackground(); }; // Call updateBackground here
             document.getElementById('download-btn').onclick = () => {
                 const link = document.createElement('a');
                 link.download = `logo-3d-${Date.now()}.png`;
