@@ -168,6 +168,46 @@
                     <option value="wood">Wood</option>
                 </select>
             </div>
+            <div>
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Texture</label>
+                <select id="texture-select"
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
+                    <option value="none">None (Solid Color)</option>
+                    <optgroup label="Nature & Gemstones">
+                        <option value="textures/cracked_opal_gemstone_01.jpeg">Cracked Opal</option>
+                        <option value="textures/green_gem_shine_01.jpeg">Green Gem</option>
+                        <option value="textures/emerald_inferno_01.jpeg">Emerald Inferno</option>
+                        <option value="textures/beautiful_water_surface_01.jpeg">Water Surface</option>
+                        <option value="textures/raindrop_02.jpeg">Raindrops</option>
+                        <option value="textures/moon_surface_01.jpeg">Moon Surface</option>
+                    </optgroup>
+                    <optgroup label="Gold & Fire">
+                        <option value="textures/gold_shine_01.jpeg">Gold Shine</option>
+                        <option value="textures/shining_gold_nugget_01.jpeg">Gold Nugget</option>
+                        <option value="textures/fiery_golden_sparks_01.jpeg">Golden Sparks</option>
+                        <option value="textures/molten_lava_cracks_01.jpeg">Molten Lava</option>
+                    </optgroup>
+                    <optgroup label="Food & Drink">
+                        <option value="textures/beer_foam_01.jpeg">Beer Foam</option>
+                        <option value="textures/cider_01.jpeg">Cider</option>
+                        <option value="textures/watermelon_surface_01.jpeg">Watermelon</option>
+                        <option value="textures/shaved_ice_02.jpeg">Shaved Ice</option>
+                    </optgroup>
+                    <optgroup label="Patterns & Abstract">
+                        <option value="textures/neon_02.jpeg">Neon Lines</option>
+                        <option value="textures/neon_heart_glow_01.jpeg">Neon Heart</option>
+                        <option value="textures/kaleidoscope_01.jpeg">Kaleidoscope</option>
+                        <option value="textures/leopard_pattern_01.jpeg">Leopard</option>
+                        <option value="textures/color_intersection_01.jpeg">Color Intersection</option>
+                        <option value="textures/thin_diagonal_stripes_02.jpeg">Diagonal Stripes</option>
+                        <option value="textures/shining_01.jpeg">Shining Dots</option>
+                    </optgroup>
+                    <optgroup label="Debug">
+                        <option value="https://threejs.org/examples/textures/uv_grid_opengl.jpg">UV Grid</option>
+                        <option value="https://threejs.org/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg">Checkerboard</option>
+                    </optgroup>
+                </select>
+            </div>
             <div id="presets-container">
                 <label id="presets-label" class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Metallic
                     Presets</label>
@@ -211,6 +251,11 @@
                         id="bloom-val">0</span></label>
                 <input type="range" id="bloom-range" min="0" max="5.0" step="0.01" value="0" class="w-full">
             </div>
+            <div>
+                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Texture Scale <span
+                        id="tex-scale-val">1.0</span></label>
+                <input type="range" id="tex-scale-range" min="0.1" max="10.0" step="0.1" value="1.0" class="w-full">
+            </div>
         </div>
 
         <!-- Action -->
@@ -247,11 +292,13 @@
                 <div id="backdrop-color-controls" class="hidden grid grid-cols-2 gap-2">
                     <div class="flex flex-col">
                         <span class="text-[8px] text-slate-500 uppercase mb-1">Color 1</span>
-                        <input type="color" id="backdrop-color-1" value="#1e293b" class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
+                        <input type="color" id="backdrop-color-1" value="#1e293b"
+                            class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
                     </div>
                     <div id="backdrop-color-2-container" class="flex flex-col">
                         <span class="text-[8px] text-slate-500 uppercase mb-1">Color 2</span>
-                        <input type="color" id="backdrop-color-2" value="#0f172a" class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
+                        <input type="color" id="backdrop-color-2" value="#0f172a"
+                            class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
                     </div>
                 </div>
             </div>
@@ -315,18 +362,20 @@
         const loading = document.getElementById('loading');
         const svgLoader = new THREE.SVGLoader();
         const fontLoader = new THREE.FontLoader();
+        const textureLoader = new THREE.TextureLoader();
+        const textures = {};
 
         let targetZ = 45;
 
         function initThree() {
             scene = new THREE.Scene();
 
-            ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Reduced from 0.7 to prevent washout
             scene.add(ambientLight);
             dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
             dirLight.position.set(30, 40, 50);
             scene.add(dirLight);
-            fillLight = new THREE.PointLight(0xffffff, 0.3);
+            fillLight = new THREE.PointLight(0xffffff, 0.4); // Reduced from 0.5
             fillLight.position.set(-30, -20, 30);
             scene.add(fillLight);
 
@@ -336,11 +385,11 @@
             renderer = new THREE.WebGLRenderer({
                 canvas, antialias: true, preserveDrawingBuffer: true, alpha: true
             });
-            renderer.autoClear = false;
+            renderer.autoClear = true; // Fixed: Set to true to prevent ghosting
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.setSize(1280, 720);
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 0.6; // Lowered from 1.0
+            renderer.toneMappingExposure = 0.9; // Reduced from 1.2 to fix white-out issue
             renderer.outputEncoding = THREE.sRGBEncoding;
 
             pmremGenerator = new THREE.PMREMGenerator(renderer);
@@ -352,7 +401,7 @@
 
             // Parameters: resolution, strength, radius, threshold
             bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(1280, 720), 0, 1.0, 0.5);
-            
+
             // Create a custom render target with alpha support for transparency
             const renderTarget = new THREE.WebGLRenderTarget(1280, 720, {
                 format: THREE.RGBAFormat,
@@ -456,23 +505,53 @@
             }
         }
 
-        function generate() {
-            if (!currentFont || !currentEnvMap) return;
+        async function loadTexture(url) {
+            if (url === 'none') return null;
+            if (textures[url]) return textures[url];
+
+            return new Promise((resolve) => {
+                textureLoader.load(url, (tex) => {
+                    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(0.05, 0.05); // Adjust for logo scale
+                    tex.encoding = THREE.sRGBEncoding; // Fix: Set encoding to match renderer
+                    textures[url] = tex;
+                    resolve(tex);
+                }, undefined, (err) => {
+                    console.error("Texture loading failed:", url, err);
+                    resolve(null);
+                });
+            });
+        }
+
+        let isGenerating = false;
+        async function generate() {
+            if (!currentFont || !currentEnvMap || isGenerating) return;
+            isGenerating = true;
+            
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Generating 3D model...";
 
             let prevTransform = null;
             if (mesh) {
                 prevTransform = { rotation: mesh.rotation.clone(), position: mesh.position.clone() };
-                scene.remove(mesh);
-                if (mesh.geometry) mesh.geometry.dispose();
-                if (mesh.material) mesh.material.dispose();
             }
+
+            // Fix: Remove any existing logo meshes to prevent duplicates/ghosting
+            const existingMeshes = [];
+            scene.traverse(child => {
+                if (child.name === 'logo-mesh') existingMeshes.push(child);
+            });
+            existingMeshes.forEach(m => {
+                scene.remove(m);
+                if (m.geometry) m.geometry.dispose();
+                if (m.material) m.material.dispose();
+            });
 
             const shapeType = document.getElementById('shape-select').value;
             const text = document.getElementById('text-input').value.trim();
             const depthVal = parseFloat(document.getElementById('depth-range').value);
             const materialType = document.getElementById('material-select').value;
+            const textureUrl = document.getElementById('texture-select').value;
 
             let geometry;
             if (shapeType === 'text') {
@@ -484,12 +563,12 @@
                         const spacing = parseFloat(document.getElementById('spacing-range').value);
                         const shapes = [];
                         let currentX = 0;
-                        
+
                         for (let i = 0; i < text.length; i++) {
                             const path = currentFont.font.getPath(text[i], currentX, 0, fontSize);
                             const data = svgLoader.parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${path.toPathData(2)}" /></svg>`);
                             data.paths.forEach(p => shapes.push(...p.toShapes(true)));
-                            
+
                             // Calculate next character position using actual font advance width + user spacing
                             currentX += currentFont.font.getAdvanceWidth(text[i], fontSize) + spacing;
                         }
@@ -522,18 +601,34 @@
             if (materialType === 'metallic') envIntensity = 1.2;
             if (materialType === 'glass') envIntensity = 0.8;
 
+            const selectedTexture = await loadTexture(textureUrl);
+
+            if (selectedTexture) {
+                const scale = parseFloat(document.getElementById('tex-scale-range').value);
+                // Inverse relationship: higher scale slider = lower repeat value = larger texture
+                const repeatVal = 1 / (scale * 20); 
+                selectedTexture.repeat.set(repeatVal, repeatVal);
+            }
+
+            // Fix: If texture is active, use white base color to prevent darkening
+            const baseColor = selectedTexture ? 0xffffff : (mesh ? mesh.material.color : 0xffcc33);
+
             const matProps = {
-                color: mesh ? mesh.material.color : 0xffcc33,
+                color: baseColor,
                 roughness: parseFloat(document.getElementById('rough-range').value),
                 envMap: currentEnvMap,
-                envMapIntensity: envIntensity
+                envMapIntensity: selectedTexture ? envIntensity * 2.5 : envIntensity, // Dramatically boost envMap if textured
+                map: selectedTexture,
+                emissive: selectedTexture ? 0x222222 : 0x000000, 
+                emissiveMap: selectedTexture
             };
 
             let material;
             if (materialType === 'glass') {
                 material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0.1, transmission: 1.0, ior: 1.52, thickness: 3.0, transparent: true, opacity: 1, clearcoat: 1.0, clearcoatRoughness: 0.05 });
             } else if (materialType === 'metallic') {
-                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 1.0 });
+                // If texture is applied, reduce metalness so the diffuse color is more visible
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: selectedTexture ? 0.6 : 1.0 });
             } else if (materialType === 'plastic') {
                 material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, clearcoat: 1.0, clearcoatRoughness: 0.1 });
             } else if (materialType === 'cloth') {
@@ -555,11 +650,13 @@
             };
 
             mesh = new THREE.Mesh(geometry, material);
+            mesh.name = 'logo-mesh'; // Name it for easy identification/removal
             if (prevTransform) {
                 mesh.rotation.copy(prevTransform.rotation);
                 mesh.position.copy(prevTransform.position);
             }
             scene.add(mesh);
+            isGenerating = false;
             setTimeout(() => loading.style.display = 'none', 100);
         }
 
@@ -569,7 +666,7 @@
             camera.position.z += (targetZ - camera.position.z) * 0.1;
             const rt = document.getElementById('rotate-toggle');
             if (mesh && rt && rt.checked && !isDragging) mesh.rotation.y += 0.005;
-            
+
             if (composer) {
                 composer.render();
             } else {
@@ -581,7 +678,7 @@
             const style = document.getElementById('bg-style-select').value;
             const bloomRange = document.getElementById('bloom-range');
             const bloomVal = document.getElementById('bloom-val');
-            
+
             if (style === 'transparent') {
                 scene.background = null;
                 renderer.setClearColor(0x000000, 0);
@@ -589,7 +686,7 @@
                 if (backdrop) backdrop.visible = false;
                 document.getElementById('backdrop-style-select').value = 'none';
                 document.getElementById('backdrop-color-controls').classList.add('hidden');
-                
+
                 // Disable Bloom for clean transparency
                 if (bloomPass) bloomPass.strength = 0;
                 if (bloomRange) {
@@ -628,7 +725,7 @@
                 canvas.width = 1; canvas.height = size;
                 const ctx = canvas.getContext('2d');
                 const grad = ctx.createLinearGradient(0, 0, 0, size);
-                
+
                 if (style === 'gradient-soft') {
                     grad.addColorStop(0, '#f3f4f6'); grad.addColorStop(1, '#ffffff');
                 } else if (style === 'gradient-dark') {
@@ -636,7 +733,7 @@
                 } else if (style === 'gradient-gold') {
                     grad.addColorStop(0, '#451a03'); grad.addColorStop(1, '#000000');
                 }
-                
+
                 ctx.fillStyle = grad;
                 ctx.fillRect(0, 0, 1, size);
                 scene.background = new THREE.CanvasTexture(canvas);
@@ -648,7 +745,7 @@
             const style = document.getElementById('backdrop-style-select').value;
             const controls = document.getElementById('backdrop-color-controls');
             const c2Container = document.getElementById('backdrop-color-2-container');
-            
+
             if (style === 'none') {
                 if (backdrop) backdrop.visible = false;
                 controls.classList.add('hidden');
@@ -755,11 +852,17 @@
                 document.getElementById('rgb-val').innerText = val.toFixed(1);
                 uniforms.uRgbIntensity.value = val;
             };
+            document.getElementById('tex-scale-range').oninput = (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById('tex-scale-val').innerText = val.toFixed(1);
+                generate();
+            };
             document.getElementById('backdrop-style-select').onchange = updateBackdrop;
             document.getElementById('backdrop-color-1').oninput = updateBackdrop;
             document.getElementById('backdrop-color-2').oninput = updateBackdrop;
             document.getElementById('bg-style-select').onchange = updateBackgroundStyle;
             document.getElementById('material-select').onchange = () => { updatePresetsUI(); generate(); };
+            document.getElementById('texture-select').onchange = generate;
             document.getElementById('font-select').onchange = (e) => loadFont(e.target.value);
             document.getElementById('regen-btn').onclick = generate;
             document.getElementById('shape-select').onchange = generate;
