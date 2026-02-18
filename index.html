@@ -73,253 +73,220 @@
     </div>
 
     <div
-        class="w-full max-w-5xl bg-slate-900/50 backdrop-blur-md p-6 rounded-3xl border border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-8 shadow-xl">
+        class="w-full max-w-5xl bg-slate-900/50 backdrop-blur-md p-6 rounded-3xl border border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-8 shadow-xl">
 
-        <!-- Text & Style -->
+        <!-- 1. 基本設定 -->
         <div class="space-y-4">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
-                Text & Style</h3>
+                基本設定</h3>
             <div>
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">テキスト入力</label>
                 <input type="text" id="text-input" value="黄金ロゴ制作"
                     class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm outline-none focus:ring-2 ring-blue-500/50 text-white transition-all"
                     maxlength="15">
             </div>
             <div>
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">フォント</label>
                 <select id="font-select"
                     class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
                     <optgroup label="日本語フォント">
                         <option
                             value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/rocknrollone/RocknRollOne-Regular.ttf">
                             RocknRoll One (中太・おすすめ)</option>
-
                         <option
                             value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/delagothicone/DelaGothicOne-Regular.ttf">
                             Dela Gothic One (極太)</option>
-
-
                         <option
                             value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/mplusrounded1c/MPLUSRounded1c-Bold.ttf">
-                            M PLUS Rounded 1c (丸ゴシック太字)</option>
-
-
+                            M PLUS Rounded 1c (丸ゴシック)</option>
                         <option
                             value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/zenkakugothicnew/ZenKakuGothicNew-Bold.ttf">
-                            Zen Kaku Gothic New (太字角ゴシック)</option>
-                        <option
-                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/bizudgothic/BIZUDGothic-Bold.ttf">
-                            BIZ UD Gothic (太字UDゴシック)</option>
-
-                        <option
-                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/zenoldmincho/ZenOldMincho-Regular.ttf">
-                            Zen Old Mincho (古典明朝)</option>
+                            Zen Kaku Gothic New (角ゴシック)</option>
                         <option
                             value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/dotgothic16/DotGothic16-Regular.ttf">
-                            DotGothic16 (ドットゴシック)</option>
-                        <option
-                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/hachimarupop/HachiMaruPop-Regular.ttf">
-                            Hachi Maru Pop (手書きポップ)</option>
-                        <option
-                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/kaiseidecol/KaiseiDecol-Regular.ttf">
-                            Kaisei Decol (装飾書体)</option>
-                        <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/yomogi/Yomogi-Regular.ttf">
-                            Yomogi (手書き風)</option>
-
-
-
-
+                            DotGothic16 (ドット)</option>
                     </optgroup>
-                    <optgroup label="英字フォント (Three.js FontLoader)">
+                    <optgroup label="英字フォント">
                         <option value="helvetiker_bold">Helvetiker (Standard)</option>
                         <option value="gentilis_bold">Gentilis (Classic)</option>
-                        <option value="optimer_bold">Optimer (Sharp)</option>
                         <option
                             value="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/droid/droid_sans_bold">
-                            Droid Sans (Roboto-like)</option>
-                        <option value="https://cdn.rawgit.com/mrdoob/three.js/master/examples/fonts/helvetiker_regular">
-                            Regular Light</option>
-                        <option
-                            value="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/droid/droid_serif_bold">
-                            Droid Serif (Academic)</option>
+                            Droid Sans</option>
                     </optgroup>
                 </select>
             </div>
-            <div>
-                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Shape</label>
-                <select id="shape-select"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
-                    <option value="text">3D Text Mode</option>
-                    <option value="goldbar">Gold Bar Mode</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Material -->
-        <div class="space-y-4">
-            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
-                Material</h3>
-            <div>
-                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Type</label>
-                <select id="material-select"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
-                    <option value="metallic">Metallic</option>
-                    <option value="glass">Glass</option>
-                    <option value="plastic">Plastic</option>
-                    <option value="cloth">Cloth</option>
-                    <option value="wood">Wood</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Texture</label>
-                <select id="texture-select"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
-                    <option value="none">None (Solid Color)</option>
-                    <optgroup label="Nature & Gemstones">
-                        <option value="textures/cracked_opal_gemstone_01.jpeg">Cracked Opal</option>
-                        <option value="textures/green_gem_shine_01.jpeg">Green Gem</option>
-                        <option value="textures/emerald_inferno_01.jpeg">Emerald Inferno</option>
-                        <option value="textures/beautiful_water_surface_01.jpeg">Water Surface</option>
-                        <option value="textures/raindrop_02.jpeg">Raindrops</option>
-                        <option value="textures/moon_surface_01.jpeg">Moon Surface</option>
-                    </optgroup>
-                    <optgroup label="Gold & Fire">
-                        <option value="textures/gold_shine_01.jpeg">Gold Shine</option>
-                        <option value="textures/shining_gold_nugget_01.jpeg">Gold Nugget</option>
-                        <option value="textures/fiery_golden_sparks_01.jpeg">Golden Sparks</option>
-                        <option value="textures/molten_lava_cracks_01.jpeg">Molten Lava</option>
-                    </optgroup>
-                    <optgroup label="Food & Drink">
-                        <option value="textures/beer_foam_01.jpeg">Beer Foam</option>
-                        <option value="textures/cider_01.jpeg">Cider</option>
-                        <option value="textures/watermelon_surface_01.jpeg">Watermelon</option>
-                        <option value="textures/shaved_ice_02.jpeg">Shaved Ice</option>
-                    </optgroup>
-                    <optgroup label="Patterns & Abstract">
-                        <option value="textures/neon_02.jpeg">Neon Lines</option>
-                        <option value="textures/neon_heart_glow_01.jpeg">Neon Heart</option>
-                        <option value="textures/kaleidoscope_01.jpeg">Kaleidoscope</option>
-                        <option value="textures/leopard_pattern_01.jpeg">Leopard</option>
-                        <option value="textures/color_intersection_01.jpeg">Color Intersection</option>
-                        <option value="textures/thin_diagonal_stripes_02.jpeg">Diagonal Stripes</option>
-                        <option value="textures/shining_01.jpeg">Shining Dots</option>
-                    </optgroup>
-                    <optgroup label="Debug">
-                        <option value="https://threejs.org/examples/textures/uv_grid_opengl.jpg">UV Grid</option>
-                        <option value="https://threejs.org/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg">
-                            Checkerboard</option>
-                    </optgroup>
-                </select>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">形状</label>
+                    <select id="shape-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="text">3Dテキスト</option>
+                        <option value="goldbar">インゴット</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">素材の種類</label>
+                    <select id="material-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="metallic">金属 (Metallic)</option>
+                        <option value="glass">ガラス (Glass)</option>
+                        <option value="plastic">プラスチック</option>
+                        <option value="cloth">布 (Cloth)</option>
+                        <option value="wood">木材 (Wood)</option>
+                    </select>
+                </div>
             </div>
             <div id="presets-container">
-                <label id="presets-label" class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Metallic
-                    Presets</label>
+                <label id="presets-label" class="text-[10px] text-slate-400 mb-2 uppercase font-bold">素材プリセット</label>
                 <div id="material-presets" class="grid grid-cols-2 gap-2">
                     <!-- Presets will be injected here -->
                 </div>
             </div>
         </div>
 
-        <!-- Fine Tuning -->
+        <!-- 2. 質感とテクスチャ -->
         <div class="space-y-4">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
-                Fine Tuning</h3>
-            <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Roughness <span
-                        id="rough-val">0.23</span></label>
-                <input type="range" id="rough-range" min="0" max="1.0" step="0.01" value="0.23" class="w-full">
+                質感とテクスチャ</h3>
+            <div class="bg-slate-800/30 p-3 rounded-2xl border border-slate-800 space-y-3">
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">テクスチャ選択</label>
+                    <select id="texture-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
+                        <option value="none">なし (単色モード)</option>
+                        <optgroup label="自然・宝石">
+                            <option value="textures/cracked_opal_gemstone_01.jpeg">オパール</option>
+                            <option value="textures/green_gem_shine_01.jpeg">グリーンジェム</option>
+                            <option value="textures/emerald_inferno_01.jpeg">エメラルド・インフェルノ</option>
+                            <option value="textures/beautiful_water_surface_01.jpeg">水面</option>
+                            <option value="textures/raindrop_02.jpeg">雨滴</option>
+                            <option value="textures/moon_surface_01.jpeg">月面</option>
+                        </optgroup>
+                        <optgroup label="黄金・炎">
+                            <option value="textures/gold_shine_01.jpeg">ゴールドシャイン</option>
+                            <option value="textures/shining_gold_nugget_01.jpeg">金塊</option>
+                            <option value="textures/fiery_golden_sparks_01.jpeg">ゴールデンスパーク</option>
+                            <option value="textures/molten_lava_cracks_01.jpeg">溶岩</option>
+                        </optgroup>
+                        <optgroup label="フード・ドリンク">
+                            <option value="textures/beer_foam_01.jpeg">ビール泡</option>
+                            <option value="textures/cider_01.jpeg">サイダー</option>
+                            <option value="textures/watermelon_surface_01.jpeg">スイカ</option>
+                            <option value="textures/shaved_ice_02.jpeg">かき氷</option>
+                        </optgroup>
+                        <optgroup label="パターン・抽象">
+                            <option value="textures/neon_02.jpeg">ネオンライン</option>
+                            <option value="textures/neon_heart_glow_01.jpeg">ネオンハート</option>
+                            <option value="textures/kaleidoscope_01.jpeg">万華鏡</option>
+                            <option value="textures/leopard_pattern_01.jpeg">レオパード</option>
+                            <option value="textures/color_intersection_01.jpeg">カラー交差</option>
+                            <option value="textures/thin_diagonal_stripes_02.jpeg">ストライプ</option>
+                            <option value="textures/shining_01.jpeg">シャイニングドット</option>
+                        </optgroup>
+                        <optgroup label="デバッグ用">
+                            <option value="https://threejs.org/examples/textures/uv_grid_opengl.jpg">UVグリッド</option>
+                            <option value="https://threejs.org/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg">チェッカーボード</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">テクスチャ密度 <span
+                            id="tex-scale-val">5.0</span></label>
+                    <input type="range" id="tex-scale-range" min="0.1" max="10.0" step="0.1" value="5.0" class="w-full">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">粗さ <span
+                            id="rough-val">0.23</span></label>
+                    <input type="range" id="rough-range" min="0" max="1.0" step="0.01" value="0.23" class="w-full">
+                </div>
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">虹色効果 <span
+                            id="rgb-val">0.5</span></label>
+                    <input type="range" id="rgb-range" min="0" max="5.0" step="0.1" value="0.5" class="w-full">
+                </div>
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">厚み <span
+                            id="depth-val">2.0</span></label>
+                    <input type="range" id="depth-range" min="0.1" max="10.0" step="0.1" value="2.0" class="w-full">
+                </div>
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">文字間隔 <span
+                            id="spacing-val">0</span></label>
+                    <input type="range" id="spacing-range" min="-50" max="100" step="1" value="0" class="w-full">
+                </div>
             </div>
             <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">RGB Intensity
-                    <span id="rgb-val">0.5</span></label>
-                <input type="range" id="rgb-range" min="0" max="5.0" step="0.1" value="0.5" class="w-full">
-            </div>
-            <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Depth <span
-                        id="depth-val">2.0</span></label>
-                <input type="range" id="depth-range" min="0.1" max="10.0" step="0.1" value="2.0" class="w-full">
-            </div>
-            <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Spacing <span
-                        id="spacing-val">0</span></label>
-                <input type="range" id="spacing-range" min="-50" max="100" step="1" value="0" class="w-full">
-            </div>
-            <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Zoom <span
-                        id="zoom-val">45</span></label>
-                <input type="range" id="zoom-range" min="15" max="150" step="1" value="45" class="w-full">
-            </div>
-            <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Bloom <span
+                <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">輝き (ブルーム) <span
                         id="bloom-val">0</span></label>
                 <input type="range" id="bloom-range" min="0" max="5.0" step="0.01" value="0" class="w-full">
             </div>
-            <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Texture Scale
-                    <span id="tex-scale-val">5.0</span></label>
-                <input type="range" id="tex-scale-range" min="0.1" max="10.0" step="0.1" value="5.0" class="w-full">
-            </div>
         </div>
 
-        <!-- Action -->
+        <!-- 3. シーンと出力 -->
         <div class="flex flex-col space-y-4">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
-                Action</h3>
-            <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700">
-                <span class="text-[10px] text-slate-400 font-bold uppercase">Auto Rotation</span>
-                <input type="checkbox" id="rotate-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
-            </div>
-            <div>
-                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Environment (Lighting)</label>
-                <select id="env-select"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
-                    <option value="environments/university_workshop_1k.hdr">University Workshop (Standard)</option>
-                    <option value="environments/royal_esplanade_1k.hdr">Royal Esplanade (Vibrant)</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Background Style</label>
-                <select id="bg-style-select"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
-                    <option value="transparent">Transparent (Export Mode)</option>
-                    <option value="white">Solid White</option>
-                    <option value="dark">Dark Slate</option>
-                    <option value="midnight">Midnight Blue</option>
-                    <option value="gradient-soft">Soft Light Gradient</option>
-                    <option value="gradient-dark">Deep Dark Gradient</option>
-                    <option value="gradient-gold">Royal Gold Gradient</option>
-                </select>
-            </div>
-            <div class="space-y-2">
-                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">Backdrop (3D Plane)</label>
-                <select id="backdrop-style-select"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
-                    <option value="none">None</option>
-                    <option value="grid">Cyber Grid</option>
-                    <option value="solid">Solid Color</option>
-                    <option value="gradient-linear">Linear Gradient</option>
-                    <option value="gradient-radial">Radial Glow</option>
-                </select>
-                <div id="backdrop-color-controls" class="hidden grid grid-cols-2 gap-2">
-                    <div class="flex flex-col">
-                        <span class="text-[8px] text-slate-500 uppercase mb-1">Color 1</span>
-                        <input type="color" id="backdrop-color-1" value="#1e293b"
-                            class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
-                    </div>
-                    <div id="backdrop-color-2-container" class="flex flex-col">
-                        <span class="text-[8px] text-slate-500 uppercase mb-1">Color 2</span>
-                        <input type="color" id="backdrop-color-2" value="#0f172a"
-                            class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
-                    </div>
+                シーンと保存</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="flex items-center justify-between bg-slate-800/50 p-2 rounded-xl border border-slate-700">
+                    <span class="text-[9px] text-slate-400 font-bold uppercase">自動回転</span>
+                    <input type="checkbox" id="rotate-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
                 </div>
+                <div>
+                    <select id="env-select"
+                        class="w-full h-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="environments/university_workshop_1k.hdr">照明: 標準スタジオ</option>
+                        <option value="environments/royal_esplanade_1k.hdr">照明: 華やか</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-1 uppercase font-bold">背景スタイル</label>
+                    <select id="bg-style-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="transparent">透過 (書き出し用)</option>
+                        <option value="white">ホワイト</option>
+                        <option value="dark">ダークグレー</option>
+                        <option value="midnight">ミッドナイト</option>
+                        <option value="gradient-soft">ソフトグラデ</option>
+                        <option value="gradient-dark">ディープグラデ</option>
+                        <option value="gradient-gold">ロイヤルゴールド</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-1 uppercase font-bold">背景パネル</label>
+                    <select id="backdrop-style-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="none">なし</option>
+                        <option value="grid">サイバーグリッド</option>
+                        <option value="solid">単色パネル</option>
+                        <option value="gradient-linear">線形グラデ</option>
+                        <option value="gradient-radial">ラジアルグロウ</option>
+                    </select>
+                </div>
+            </div>
+            <div id="backdrop-color-controls" class="hidden grid grid-cols-2 gap-2">
+                <input type="color" id="backdrop-color-1" value="#1e293b" class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
+                <div id="backdrop-color-2-container">
+                    <input type="color" id="backdrop-color-2" value="#0f172a" class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
+                </div>
+            </div>
+            <div>
+                <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">表示距離 (ズーム) <span
+                        id="zoom-val">45</span></label>
+                <input type="range" id="zoom-range" min="15" max="150" step="1" value="45" class="w-full">
             </div>
             <div class="pt-2 space-y-3">
                 <button id="regen-btn"
-                    class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl uppercase text-[11px] tracking-[0.2em] transition-all shadow-lg active:scale-95">Update
-                    Scene</button>
+                    class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl uppercase text-[11px] tracking-[0.2em] transition-all shadow-lg active:scale-95">シーンを更新</button>
                 <button id="download-btn"
-                    class="w-full bg-slate-800 border border-slate-700 text-slate-400 py-2 rounded-xl text-[10px] uppercase hover:text-white transition-all italic font-bold">Capture
-                    PNG</button>
+                    class="w-full bg-slate-800 border border-slate-700 text-slate-400 py-2 rounded-xl text-[10px] uppercase hover:text-white transition-all italic font-bold">画像を保存 (PNG)</button>
             </div>
         </div>
+    </div>
     </div>
 
     <script>
