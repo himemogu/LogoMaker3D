@@ -150,7 +150,15 @@
                 質感とテクスチャ</h3>
             <div class="bg-slate-800/30 p-3 rounded-2xl border border-slate-800 space-y-3">
                 <div>
-                    <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">テクスチャ選択</label>
+                    <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold flex justify-between items-center">
+                        テクスチャ選択
+                        <button id="open-gallery-btn" class="text-blue-400 hover:text-blue-300 text-[9px] flex items-center gap-1 bg-blue-500/10 px-2 py-1 rounded-lg transition-all border border-blue-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                            </svg>
+                            ギャラリー
+                        </button>
+                    </label>
                     <select id="texture-select"
                         class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
                         <option value="none">なし (単色モード)</option>
@@ -287,6 +295,27 @@
             </div>
         </div>
     </div>
+    </div>
+
+    <!-- Texture Gallery Modal -->
+    <div id="texture-gallery-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="close-gallery-overlay"></div>
+        <div class="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <div>
+                    <h2 class="text-xl font-black text-white italic">TEXTURE GALLERY</h2>
+                    <p class="text-slate-400 text-[10px] uppercase tracking-widest">Select a material surface</p>
+                </div>
+                <button id="close-gallery-btn" class="p-2 hover:bg-slate-800 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="gallery-grid" class="p-6 overflow-y-auto flex flex-col gap-10">
+                <!-- Gallery sections with headings and grids will be injected here -->
+            </div>
+        </div>
     </div>
 
     <script>
@@ -797,6 +826,85 @@
 
         let isDragging = false, isPanning = false, prevMouse = { x: 0, y: 0 };
         function setupInteractions() {
+            // Texture Gallery Logic
+            const modal = document.getElementById('texture-gallery-modal');
+            const openBtn = document.getElementById('open-gallery-btn');
+            const closeBtn = document.getElementById('close-gallery-btn');
+            const overlay = document.getElementById('close-gallery-overlay');
+            const grid = document.getElementById('gallery-grid');
+            const textureSelect = document.getElementById('texture-select');
+
+            function populateGallery() {
+                grid.innerHTML = '';
+                
+                const soloOptions = Array.from(textureSelect.querySelectorAll('option:not(optgroup option)'));
+                const optGroups = Array.from(textureSelect.querySelectorAll('optgroup'));
+
+                function createSection(titleText, options) {
+                    const section = document.createElement('div');
+                    section.className = 'flex flex-col gap-4';
+                    
+                    const heading = document.createElement('h3');
+                    heading.className = 'text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2';
+                    heading.innerText = titleText;
+                    section.appendChild(heading);
+                    
+                    const itemGrid = document.createElement('div');
+                    itemGrid.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4';
+                    options.forEach(opt => itemGrid.appendChild(createGalleryItem(opt)));
+                    
+                    section.appendChild(itemGrid);
+                    grid.appendChild(section);
+                }
+
+                if (soloOptions.length > 0) {
+                    createSection("GENERAL", soloOptions);
+                }
+
+                optGroups.forEach(group => {
+                    createSection(group.label, Array.from(group.querySelectorAll('option')));
+                });
+            }
+
+            function createGalleryItem(opt) {
+                const url = opt.value;
+                const name = opt.innerText;
+                const card = document.createElement('div');
+                card.className = 'group relative aspect-square w-full bg-slate-800 rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all shadow-lg active:scale-95';
+                
+                if (url === 'none') {
+                    card.innerHTML = `<div class="w-full h-full flex items-center justify-center text-[10px] text-slate-500 font-bold uppercase">None</div>`;
+                } else {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.loading = 'lazy';
+                    img.className = 'w-full h-full object-cover group-hover:scale-110 transition-transform duration-500';
+                    card.appendChild(img);
+                    
+                    const label = document.createElement('div');
+                    label.className = 'absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-md p-2 text-[8px] text-white font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity';
+                    label.innerText = name;
+                    card.appendChild(label);
+                }
+
+                if (textureSelect.value === url) card.classList.add('border-blue-500', 'ring-2', 'ring-blue-500/50');
+
+                card.onclick = () => {
+                    textureSelect.value = url;
+                    generate();
+                    modal.classList.add('hidden');
+                };
+                
+                return card;
+            }
+
+            openBtn.onclick = () => {
+                populateGallery();
+                modal.classList.remove('hidden');
+            };
+            closeBtn.onclick = () => modal.classList.add('hidden');
+            overlay.onclick = () => modal.classList.add('hidden');
+
             canvas.onmousedown = (e) => {
                 if (e.button === 0) {
                     if (e.shiftKey) isPanning = true; else isDragging = true;
