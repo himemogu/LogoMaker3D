@@ -103,8 +103,22 @@
                             value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/zenkakugothicnew/ZenKakuGothicNew-Bold.ttf">
                             Zen Kaku Gothic New (角ゴシック)</option>
                         <option
+                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/bizudgothic/BIZUDGothic-Bold.ttf">
+                            BIZ UD Gothic (太字UDゴシック)</option>
+                        <option
+                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/zenoldmincho/ZenOldMincho-Regular.ttf">
+                            Zen Old Mincho (古典明朝)</option>
+                        <option
                             value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/dotgothic16/DotGothic16-Regular.ttf">
                             DotGothic16 (ドット)</option>
+                        <option
+                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/hachimarupop/HachiMaruPop-Regular.ttf">
+                            Hachi Maru Pop (手書きポップ)</option>
+                        <option
+                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/kaiseidecol/KaiseiDecol-Regular.ttf">
+                            Kaisei Decol (装飾書体)</option>
+                        <option value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/yomogi/Yomogi-Regular.ttf">
+                            Yomogi (手書き風)</option>
                     </optgroup>
                     <optgroup label="英字フォント (Standard)">
                         <option value="helvetiker_bold">Helvetiker (太字・標準)</option>
@@ -531,17 +545,20 @@
             }
         }
 
-        async function loadTexture(url) {
+        async function loadTexture(url, isEnglish) {
             if (url === 'none') return null;
-            if (textures[url]) return textures[url];
+            // Cache separate versions for EN and JP to avoid flipY conflicts
+            const cacheKey = `${url}_${isEnglish ? 'en' : 'jp'}`;
+            if (textures[cacheKey]) return textures[cacheKey];
 
             return new Promise((resolve) => {
                 textureLoader.load(url, (tex) => {
                     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-                    tex.repeat.set(0.05, 0.05); // Adjust for logo scale
-                    tex.encoding = THREE.sRGBEncoding; // Fix: Set encoding to match renderer
-                    tex.flipY = false; // Fix: Prevent texture from appearing upside down
-                    textures[url] = tex;
+                    tex.encoding = THREE.sRGBEncoding;
+                    // English (TextGeometry) usually needs flipY=true, 
+                    // Japanese needs flipY=false due to its 180deg geometry rotation.
+                    tex.flipY = isEnglish ? true : false;
+                    textures[cacheKey] = tex;
                     resolve(tex);
                 }, undefined, (err) => {
                     console.error("Texture loading failed:", url, err);
@@ -628,13 +645,15 @@
             if (materialType === 'metallic') envIntensity = 1.2;
             if (materialType === 'glass') envIntensity = 0.8;
 
-            const selectedTexture = await loadTexture(textureUrl);
+            const isEnglish = currentFont.type === 'threejs';
+            const selectedTexture = await loadTexture(textureUrl, isEnglish);
 
             if (selectedTexture) {
                 const scale = parseFloat(document.getElementById('tex-scale-range').value);
-                // Inverse relationship: higher scale slider = lower repeat value = larger texture
-                const repeatVal = 1 / (scale * 20);
-                selectedTexture.repeat.set(repeatVal, repeatVal);
+                // Adjust repeat based on font type to unify visual density
+                const baseRepeat = 1 / (scale * 20);
+                const finalRepeat = isEnglish ? baseRepeat * 12.5 : baseRepeat;
+                selectedTexture.repeat.set(finalRepeat, finalRepeat);
             }
 
             // Fix: If texture is active, use light gray base color to prevent over-exposure
