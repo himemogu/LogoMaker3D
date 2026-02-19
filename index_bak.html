@@ -4,20 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Metallic Shader - Google Fonts Edition</title>
+    <title>Advanced Metallic Shader - Final Refined Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/SVGLoader.js"></script>
+    <script src="https://raw.githack.com/mrdoob/three.js/r128/examples/js/loaders/RGBELoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
     <style>
         canvas {
             max-width: 100%;
-            max-height: 55vh;
+            max-height: 60vh;
             object-fit: contain;
             cursor: grab;
             touch-action: none;
-            background-image: radial-gradient(#2d3748 1px, transparent 1px);
-            background-size: 20px 20px;
         }
 
         canvas:active {
@@ -28,28 +35,20 @@
             display: none;
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 10;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
             justify-content: center;
             align-items: center;
             pointer-events: none;
         }
 
-        input[type="range"] {
-            appearance: none;
-            background: #334155;
-            height: 6px;
-            border-radius: 3px;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #60a5fa;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid #fff;
+        .btn-preset {
+            font-size: 10px;
+            font-weight: 900;
+            padding: 8px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            transition: all 0.2s;
         }
     </style>
 </head>
@@ -58,155 +57,445 @@
 
     <header class="text-center mb-4">
         <h1 class="text-3xl font-black text-white tracking-tighter italic">METALLIC IRIDESCENCE</h1>
-        <p class="text-blue-400 text-[10px] uppercase tracking-[0.3em]">Google Fonts Integrated Studio</p>
+        <p class="text-blue-400 text-[10px] uppercase tracking-[0.5em] font-bold">Refined Japanese 3D Studio</p>
     </header>
 
     <div
-        class="relative w-full max-w-5xl flex justify-center items-center mb-6 bg-black rounded-3xl p-1 border border-slate-800 shadow-2xl overflow-hidden">
+        class="relative w-full max-w-5xl flex justify-center items-center mb-6 bg-black rounded-3xl p-1 border border-slate-800 shadow-2xl overflow-hidden aspect-video">
         <div id="loading" class="loading-overlay">
             <div class="flex flex-col items-center">
                 <div class="w-10 h-10 border-2 border-blue-900 border-t-blue-400 rounded-full animate-spin"></div>
-                <p id="loading-text" class="text-blue-400 font-bold text-[10px] mt-4 uppercase tracking-widest">Loading
-                    Font...</p>
+                <p id="loading-text" class="text-blue-400 font-bold text-[10px] mt-4 uppercase tracking-widest">
+                    Processing...</p>
             </div>
         </div>
         <canvas id="main-canvas" class="rounded-2xl"></canvas>
     </div>
 
     <div
-        class="w-full max-w-5xl bg-slate-900/50 backdrop-blur-md p-6 rounded-3xl border border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-8 shadow-xl">
+        class="w-full max-w-5xl bg-slate-900/50 backdrop-blur-md p-6 rounded-3xl border border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-8 shadow-xl">
 
-        <!-- Text & Font -->
+        <!-- 1. 基本設定 -->
         <div class="space-y-4">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
-                Text & Font</h3>
+                基本設定</h3>
             <div>
-                <input type="text" id="text-input" value="GOLD"
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">テキスト入力</label>
+                <input type="text" id="text-input" value="黄金ロゴ制作"
                     class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm outline-none focus:ring-2 ring-blue-500/50 text-white transition-all"
                     maxlength="15">
             </div>
             <div>
+                <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">フォント</label>
                 <select id="font-select"
                     class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
-                    <optgroup label="Three.js Standard">
-                        <option value="helvetiker_bold">Helvetiker (Standard)</option>
-                        <option value="gentilis_bold">Gentilis (Classic)</option>
-                        <option value="optimer_bold">Optimer (Sharp)</option>
+                    <optgroup label="日本語フォント">
+                        <option
+                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/rocknrollone/RocknRollOne-Regular.ttf">
+                            RocknRoll One (中太・おすすめ)</option>
+                        <option
+                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/delagothicone/DelaGothicOne-Regular.ttf">
+                            Dela Gothic One (極太)</option>
+                        <option
+                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/mplusrounded1c/MPLUSRounded1c-Bold.ttf">
+                            M PLUS Rounded 1c (丸ゴシック)</option>
+                        <option
+                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/zenkakugothicnew/ZenKakuGothicNew-Bold.ttf">
+                            Zen Kaku Gothic New (角ゴシック)</option>
+                        <option
+                            value="https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/dotgothic16/DotGothic16-Regular.ttf">
+                            DotGothic16 (ドット)</option>
                     </optgroup>
-                    <optgroup label="Popular Google Fonts (3D Web)">
+                    <optgroup label="英字フォント (Standard)">
+                        <option value="helvetiker_bold">Helvetiker (太字・標準)</option>
+                        <option value="gentilis_bold">Gentilis (クラシック)</option>
+                        <option value="optimer_bold">Optimer (シャープ)</option>
                         <option
                             value="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/droid/droid_sans_bold">
-                            Droid Sans (Roboto-like)</option>
-                        <option value="https://cdn.rawgit.com/mrdoob/three.js/master/examples/fonts/helvetiker_regular">
-                            Regular Light</option>
+                            Droid Sans (モダン)</option>
                         <option
                             value="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/droid/droid_serif_bold">
-                            Droid Serif (Academic)</option>
+                            Droid Serif (セリフ体)</option>
                     </optgroup>
                 </select>
             </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">形状</label>
+                    <select id="shape-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="text">3Dテキスト</option>
+                        <option value="goldbar">インゴット</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-2 uppercase font-bold">素材の種類</label>
+                    <select id="material-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="metallic">金属 (Metallic)</option>
+                        <option value="glass">ガラス (Glass)</option>
+                        <option value="plastic">プラスチック</option>
+                        <option value="cloth">布 (Cloth)</option>
+                        <option value="wood">木材 (Wood)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="presets-container">
+                <label id="presets-label" class="text-[10px] text-slate-400 mb-2 uppercase font-bold">素材プリセット</label>
+                <div id="material-presets" class="grid grid-cols-2 gap-2">
+                    <!-- Presets will be injected here -->
+                </div>
+            </div>
         </div>
 
-        <!-- Geometry & Material -->
+        <!-- 2. 質感とテクスチャ -->
         <div class="space-y-4">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
-                Material Presets</h3>
-            <select id="shape-select"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none mb-2">
-                <option value="text">3D Text</option>
-                <option value="goldbar">Gold Bar (Half Height)</option>
-                <option value="torus">Torus Knot</option>
-                <option value="sphere">Sphere</option>
-            </select>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="setMaterial('#d1d5db', 0.15)"
-                    class="bg-slate-300 text-black font-bold py-2 rounded-lg text-[10px] uppercase hover:brightness-110 transition-all">Platinum</button>
-                <button onclick="setMaterial('#ffffff', 0.05)"
-                    class="bg-slate-100 text-black font-bold py-2 rounded-lg text-[10px] uppercase hover:brightness-110 transition-all">Silver</button>
-                <button id="gold-btn" onclick="setMaterial('#ffcc33', 0.23)"
-                    class="bg-amber-400 text-black font-bold py-2 rounded-lg text-[10px] uppercase hover:brightness-110 transition-all">Gold</button>
-                <button onclick="setMaterial('#b87333', 0.35)"
-                    class="bg-orange-700 text-white font-bold py-2 rounded-lg text-[10px] uppercase hover:brightness-110 transition-all">Copper</button>
+                質感とテクスチャ</h3>
+            <div class="bg-slate-800/30 p-3 rounded-2xl border border-slate-800 space-y-3">
+                <div>
+                    <label
+                        class="text-[10px] text-slate-400 mb-2 uppercase font-bold flex justify-between items-center">
+                        テクスチャ選択
+                        <button id="open-gallery-btn"
+                            class="text-blue-400 hover:text-blue-300 text-[9px] flex items-center gap-1 bg-blue-500/10 px-2 py-1 rounded-lg transition-all border border-blue-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                            </svg>
+                            ギャラリー
+                        </button>
+                    </label>
+                    <select id="texture-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white outline-none">
+                        <option value="none">なし (単色モード)</option>
+                        <optgroup label="自然・宝石">
+                            <option value="textures/cracked_opal_gemstone_01.jpeg">オパール</option>
+                            <option value="textures/green_gem_shine_01.jpeg">グリーンジェム</option>
+                            <option value="textures/emerald_inferno_01.jpeg">エメラルド・インフェルノ</option>
+                            <option value="textures/beautiful_water_surface_01.jpeg">水面</option>
+                            <option value="textures/raindrop_02.jpeg">雨滴</option>
+                            <option value="textures/moon_surface_01.jpeg">月面</option>
+                        </optgroup>
+                        <optgroup label="黄金・炎">
+                            <option value="textures/gold_shine_01.jpeg">ゴールドシャイン</option>
+                            <option value="textures/shining_gold_nugget_01.jpeg">金塊</option>
+                            <option value="textures/fiery_golden_sparks_01.jpeg">ゴールデンスパーク</option>
+                            <option value="textures/molten_lava_cracks_01.jpeg">溶岩</option>
+                        </optgroup>
+                        <optgroup label="フード・ドリンク">
+                            <option value="textures/beer_foam_01.jpeg">ビール泡</option>
+                            <option value="textures/cider_01.jpeg">サイダー</option>
+                            <option value="textures/watermelon_surface_01.jpeg">スイカ</option>
+                            <option value="textures/shaved_ice_02.jpeg">かき氷</option>
+                        </optgroup>
+                        <optgroup label="パターン・抽象">
+                            <option value="textures/neon_02.jpeg">ネオンライン</option>
+                            <option value="textures/neon_heart_glow_01.jpeg">ネオンハート</option>
+                            <option value="textures/kaleidoscope_01.jpeg">万華鏡</option>
+                            <option value="textures/leopard_pattern_01.jpeg">レオパード</option>
+                            <option value="textures/color_intersection_01.jpeg">カラー交差</option>
+                            <option value="textures/thin_diagonal_stripes_02.jpeg">ストライプ</option>
+                            <option value="textures/shining_01.jpeg">シャイニングドット</option>
+                        </optgroup>
+                        <optgroup label="デバッグ用">
+                            <option value="https://threejs.org/examples/textures/uv_grid_opengl.jpg">UVグリッド</option>
+                            <option
+                                value="https://threejs.org/examples/textures/floors/FloorsCheckerboard_S_Diffuse.jpg">
+                                チェッカーボード</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">テクスチャ密度
+                        <span id="tex-scale-val">5.0</span></label>
+                    <input type="range" id="tex-scale-range" min="0.1" max="10.0" step="0.1" value="5.0" class="w-full">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">粗さ <span
+                            id="rough-val">0.23</span></label>
+                    <input type="range" id="rough-range" min="0" max="1.0" step="0.01" value="0.23" class="w-full">
+                </div>
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">虹色効果 <span
+                            id="rgb-val">0.5</span></label>
+                    <input type="range" id="rgb-range" min="0" max="5.0" step="0.1" value="0.5" class="w-full">
+                </div>
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">厚み <span
+                            id="depth-val">2.0</span></label>
+                    <input type="range" id="depth-range" min="0.1" max="10.0" step="0.1" value="2.0" class="w-full">
+                </div>
+                <div>
+                    <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">文字間隔 <span
+                            id="spacing-val">0</span></label>
+                    <input type="range" id="spacing-range" min="-50" max="100" step="1" value="0" class="w-full">
+                </div>
+            </div>
+            <div>
+                <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">輝き (ブルーム) <span
+                        id="bloom-val">0</span></label>
+                <input type="range" id="bloom-range" min="0" max="5.0" step="0.01" value="0" class="w-full">
             </div>
         </div>
 
-        <!-- Effects -->
-        <div class="space-y-4">
+        <!-- 3. シーンと出力 -->
+        <div class="flex flex-col space-y-4">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
-                Fine Tuning</h3>
-            <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Roughness <span
-                        id="rough-val">0.23</span></label>
-                <input type="range" id="rough-range" min="0" max="1.0" step="0.01" value="0.23" class="w-full">
+                シーンと保存</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="flex items-center justify-between bg-slate-800/50 p-2 rounded-xl border border-slate-700">
+                    <span class="text-[9px] text-slate-400 font-bold uppercase">自動回転</span>
+                    <input type="checkbox" id="rotate-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
+                </div>
+                <div>
+                    <select id="env-select"
+                        class="w-full h-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="environments/university_workshop_1k.hdr">照明: 標準スタジオ</option>
+                        <option value="environments/royal_esplanade_1k.hdr">照明: 華やか</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-1 uppercase font-bold">背景スタイル</label>
+                    <select id="bg-style-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="transparent">透過 (書き出し用)</option>
+                        <option value="white">ホワイト</option>
+                        <option value="dark">ダークグレー</option>
+                        <option value="midnight">ミッドナイト</option>
+                        <option value="gradient-soft">ソフトグラデ</option>
+                        <option value="gradient-dark">ディープグラデ</option>
+                        <option value="gradient-gold">ロイヤルゴールド</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-1 uppercase font-bold">背景パネル</label>
+                    <select id="backdrop-style-select"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-[10px] text-white outline-none">
+                        <option value="none">なし</option>
+                        <option value="grid">サイバーグリッド</option>
+                        <option value="solid">単色パネル</option>
+                        <option value="gradient-linear">線形グラデ</option>
+                        <option value="gradient-radial">ラジアルグロウ</option>
+                    </select>
+                </div>
+            </div>
+            <div id="backdrop-color-controls" class="hidden grid grid-cols-2 gap-2">
+                <input type="color" id="backdrop-color-1" value="#1e293b"
+                    class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
+                <div id="backdrop-color-2-container">
+                    <input type="color" id="backdrop-color-2" value="#0f172a"
+                        class="w-full h-8 rounded bg-slate-800 border border-slate-700 cursor-pointer">
+                </div>
             </div>
             <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">RGB Intensity
-                    <span id="rgb-val">0.5</span></label>
-                <input type="range" id="rgb-range" min="0" max="5.0" step="0.1" value="0.5" class="w-full">
+                <label class="flex justify-between text-[10px] text-slate-400 mb-1 uppercase font-bold">表示距離 (ズーム) <span
+                        id="zoom-val">45</span></label>
+                <input type="range" id="zoom-range" min="15" max="150" step="1" value="45" class="w-full">
             </div>
-            <div>
-                <label class="flex justify-between text-[10px] text-slate-400 mb-2 uppercase font-bold">Camera Zoom
-                    <span id="zoom-val">45</span></label>
-                <input type="range" id="zoom-range" min="15" max="120" step="1" value="45" class="w-full">
+            <div class="pt-2 space-y-3">
+                <button id="regen-btn"
+                    class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl uppercase text-[11px] tracking-[0.2em] transition-all shadow-lg active:scale-95">シーンを更新</button>
+                <button id="download-btn"
+                    class="w-full bg-slate-800 border border-slate-700 text-slate-400 py-2 rounded-xl text-[10px] uppercase hover:text-white transition-all italic font-bold">画像を保存
+                    (PNG)</button>
             </div>
         </div>
+    </div>
+    </div>
 
-        <!-- Action -->
-        <div class="flex flex-col justify-end space-y-3">
-            <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700 mb-1">
-                <span class="text-[10px] text-slate-400 font-bold uppercase">Auto Rotation</span>
-                <input type="checkbox" id="rotate-toggle" class="w-4 h-4 accent-blue-500 cursor-pointer">
+    <!-- Texture Gallery Modal -->
+    <div id="texture-gallery-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="close-gallery-overlay"></div>
+        <div
+            class="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <div>
+                    <h2 class="text-xl font-black text-white italic">TEXTURE GALLERY</h2>
+                    <p class="text-slate-400 text-[10px] uppercase tracking-widest">Select a material surface</p>
+                </div>
+                <button id="close-gallery-btn" class="p-2 hover:bg-slate-800 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
-            <button id="regen-btn"
-                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl uppercase text-[11px] tracking-[0.2em] transition-all shadow-lg active:scale-95">Update
-                Scene</button>
-            <button id="download-btn"
-                class="w-full bg-slate-800 border border-slate-700 text-slate-400 py-2 rounded-xl text-[10px] uppercase hover:text-white transition-all italic font-bold">Capture
-                PNG</button>
+            <div id="gallery-grid" class="p-6 overflow-y-auto flex flex-col gap-10">
+                <!-- Gallery sections with headings and grids will be injected here -->
+            </div>
         </div>
     </div>
 
     <script>
-        let scene, camera, renderer, mesh, currentFont, pmremGenerator, currentEnvMap;
+        let scene, camera, renderer, mesh, currentFont = null, pmremGenerator, currentEnvMap;
+        let backdrop;
+        let ambientLight, dirLight, fillLight;
+        let composer, bloomPass;
         let fonts = {};
         let uniforms = {
-            uRgbIntensity: { value: 0.5 },
+            uRgbIntensity: { value: 0.2 },
             uFresnelPower: { value: 2.0 },
             uTime: { value: 0 }
         };
 
+        const materialPresets = {
+            metallic: [
+                { name: 'Gold', color: '#ffcc33', rough: 0, metal: 1.0 },
+                { name: 'Iron', color: '#777777', rough: 0.25, metal: 1.0 },
+                { name: 'Platinum', color: '#b0b0b0', rough: 0.08, metal: 1.0 },
+                { name: 'Copper', color: '#b87333', rough: 0.20, metal: 1.0 }
+            ],
+            glass: [
+                { name: 'Clear', color: '#ffffff', rough: 0.0, transmission: 1.0, ior: 1.5 },
+                { name: 'Frosted', color: '#ffffff', rough: 0.4, transmission: 1.0, ior: 1.5 },
+                { name: 'Emerald', color: '#50c878', rough: 0.1, transmission: 0.9, ior: 1.7 },
+                { name: 'Ruby', color: '#e0115f', rough: 0.1, transmission: 0.9, ior: 1.8 }
+            ],
+            plastic: [
+                { name: 'Glossy Red', color: '#ff0000', rough: 0.1, clearcoat: 1.0 },
+                { name: 'Matte Blue', color: '#1e40af', rough: 0.5, clearcoat: 0.0 },
+                { name: 'Neon Green', color: '#39ff14', rough: 0.2, clearcoat: 0.5 },
+                { name: 'Black PVC', color: '#111111', rough: 0.3, clearcoat: 1.0 }
+            ],
+            cloth: [
+                { name: 'Silk', color: '#fef3c7', rough: 0.3, sheen: 1.0 },
+                { name: 'Denim', color: '#3b82f6', rough: 0.8, sheen: 0.0 },
+                { name: 'Velvet', color: '#4c1d95', rough: 0.6, sheen: 1.0 },
+                { name: 'Cotton', color: '#f8fafc', rough: 0.9, sheen: 0.0 }
+            ],
+            wood: [
+                { name: 'Oak', color: '#b58b4c', rough: 0.7 },
+                { name: 'Walnut', color: '#3d2b1f', rough: 0.6 },
+                { name: 'Mahogany', color: '#4a0e0e', rough: 0.5 },
+                { name: 'Pine', color: '#e5c07b', rough: 0.8 }
+            ]
+        };
+
         const canvas = document.getElementById('main-canvas');
         const loading = document.getElementById('loading');
+        const svgLoader = new THREE.SVGLoader();
         const fontLoader = new THREE.FontLoader();
+        const textureLoader = new THREE.TextureLoader();
+        const textures = {};
 
         let targetZ = 45;
 
         function initThree() {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(24, 1280 / 670, 0.1, 1000);
+
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Reduced from 0.7 to prevent washout
+            scene.add(ambientLight);
+            dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(30, 40, 50);
+            scene.add(dirLight);
+            fillLight = new THREE.PointLight(0xffffff, 0.4); // Reduced from 0.5
+            fillLight.position.set(-30, -20, 30);
+            scene.add(fillLight);
+
+            camera = new THREE.PerspectiveCamera(24, 1280 / 720, 0.1, 1000);
             camera.position.set(0, 0, targetZ);
 
             renderer = new THREE.WebGLRenderer({
-                canvas,
-                antialias: true,
-                preserveDrawingBuffer: true,
-                alpha: true
+                canvas, antialias: true, preserveDrawingBuffer: true, alpha: true
             });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(1280, 670);
+            renderer.autoClear = true; // Fixed: Set to true to prevent ghosting
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(1280, 720);
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.2;
+            renderer.toneMappingExposure = 0.9; // Reduced from 1.2 to fix white-out issue
             renderer.outputEncoding = THREE.sRGBEncoding;
-            renderer.setClearColor(0x000000, 0);
 
             pmremGenerator = new THREE.PMREMGenerator(renderer);
             pmremGenerator.compileEquirectangularShader();
 
-            createStudioEnv();
-            loadFont('helvetiker_bold');
+            // Setup post-processing for Bloom
+            const renderScene = new THREE.RenderPass(scene, camera);
+            renderScene.clearAlpha = 0;
 
+            // Parameters: resolution, strength, radius, threshold
+            bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(1280, 720), 0, 1.0, 0.5);
+
+            // Create a custom render target with alpha support for transparency
+            const renderTarget = new THREE.WebGLRenderTarget(1280, 720, {
+                format: THREE.RGBAFormat,
+            });
+            composer = new THREE.EffectComposer(renderer, renderTarget);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+
+            createStudioEnv(); // Start async loading of HDRI and then fonts
+            updateBackdrop();
+            updateBackgroundStyle();
+            updatePresetsUI();
             setupInteractions();
             animate();
+        }
+
+        function updatePresetsUI() {
+            const type = document.getElementById('material-select').value;
+            const container = document.getElementById('material-presets');
+            const label = document.getElementById('presets-label');
+            label.innerText = `${type.charAt(0).toUpperCase() + type.slice(1)} Presets`;
+            container.innerHTML = '';
+            const presets = materialPresets[type];
+            presets.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-preset border border-slate-700 hover:border-slate-400 transition-colors';
+                btn.style.backgroundColor = p.color;
+                btn.style.color = getContrastYIQ(p.color);
+                btn.innerText = p.name;
+                btn.onclick = () => applyPreset(p);
+                container.appendChild(btn);
+            });
+            if (presets.length > 0) applyPreset(presets[0]);
+        }
+
+        function getContrastYIQ(hexcolor) {
+            hexcolor = hexcolor.replace("#", "");
+            var r = parseInt(hexcolor.substr(0, 2), 16);
+            var g = parseInt(hexcolor.substr(2, 2), 16);
+            var b = parseInt(hexcolor.substr(4, 2), 16);
+            var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
+
+        function applyPreset(p) {
+            const rr = document.getElementById('rough-range');
+            const rv = document.getElementById('rough-val');
+            if (rr) rr.value = p.rough;
+            if (rv) rv.innerText = p.rough.toFixed(2);
+            generate();
+            if (mesh) mesh.material.color.set(p.color);
+        }
+
+        function createStudioEnv() {
+            const rgbeLoader = new THREE.RGBELoader();
+            const envUrl = document.getElementById('env-select').value;
+
+            document.getElementById('loading-text').innerText = "Loading Environment...";
+            loading.style.display = 'flex';
+
+            rgbeLoader.load(envUrl, (texture) => {
+                currentEnvMap = pmremGenerator.fromEquirectangular(texture).texture;
+                scene.environment = currentEnvMap;
+                scene.background = null; // Ensure transparency
+                renderer.setClearColor(0x000000, 0);
+                texture.dispose();
+
+                const fs = document.getElementById('font-select');
+                if (fs) loadFont(fs.value); else generate();
+            }, undefined, (err) => {
+                console.error("HDR loading failed:", envUrl, err);
+                loading.style.display = 'none';
+            });
         }
 
         async function loadFont(fontPath) {
@@ -215,256 +504,482 @@
                 generate();
                 return;
             }
-
             loading.style.display = 'flex';
-
-            let url;
-            if (fontPath.startsWith('http')) {
-                url = `${fontPath}.typeface.json`;
-            } else {
-                url = `https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/${fontPath}.typeface.json`;
-            }
-
+            document.getElementById('loading-text').innerText = "Loading Font...";
             try {
-                const font = await new Promise((resolve, reject) => {
-                    fontLoader.load(url, resolve, undefined, reject);
-                });
-                fonts[fontPath] = font;
-                currentFont = font;
+                let loadedFont, fontType;
+                if (fontPath.endsWith('.ttf')) {
+                    const response = await fetch(fontPath);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const buffer = await response.arrayBuffer();
+                    loadedFont = opentype.parse(buffer);
+                    fontType = 'opentype';
+                } else {
+                    const url = fontPath.startsWith('http') ? `${fontPath}.typeface.json` : `https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/${fontPath}.typeface.json`;
+                    loadedFont = await new Promise((res, rej) => fontLoader.load(url, res, undefined, rej));
+                    fontType = 'threejs';
+                }
+                fonts[fontPath] = { font: loadedFont, type: fontType };
+                currentFont = fonts[fontPath];
                 generate();
             } catch (err) {
                 console.error("Font loading failed:", err);
                 loading.style.display = 'none';
-                if (fontPath !== 'helvetiker_bold') loadFont('helvetiker_bold');
+                if (fontPath !== document.getElementById('font-select').options[0].value) {
+                    loadFont(document.getElementById('font-select').options[0].value);
+                }
             }
         }
 
-        function createStudioEnv() {
-            const envScene = new THREE.Scene();
-            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        async function loadTexture(url) {
+            if (url === 'none') return null;
+            if (textures[url]) return textures[url];
 
-            const hLight = new THREE.PlaneGeometry(10, 100);
-            const topLight = new THREE.Mesh(hLight, lightMat);
-            topLight.position.set(0, 50, -20);
-            topLight.rotation.x = Math.PI / 2;
-            envScene.add(topLight);
-
-            const sideLight1 = new THREE.Mesh(new THREE.PlaneGeometry(100, 20), lightMat);
-            sideLight1.position.set(-50, 0, 10);
-            sideLight1.rotation.y = Math.PI / 2;
-            envScene.add(sideLight1);
-
-            const sideLight2 = new THREE.Mesh(new THREE.PlaneGeometry(100, 20), lightMat);
-            sideLight2.position.set(50, 0, 10);
-            sideLight2.rotation.y = -Math.PI / 2;
-            envScene.add(sideLight2);
-
-            const frontLight = new THREE.Mesh(new THREE.SphereGeometry(15, 32, 32), lightMat);
-            frontLight.position.set(0, 20, 50);
-            envScene.add(frontLight);
-
-            const envTarget = pmremGenerator.fromScene(envScene);
-            currentEnvMap = envTarget.texture;
+            return new Promise((resolve) => {
+                textureLoader.load(url, (tex) => {
+                    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(0.05, 0.05); // Adjust for logo scale
+                    tex.encoding = THREE.sRGBEncoding; // Fix: Set encoding to match renderer
+                    tex.flipY = false; // Fix: Prevent texture from appearing upside down
+                    textures[url] = tex;
+                    resolve(tex);
+                }, undefined, (err) => {
+                    console.error("Texture loading failed:", url, err);
+                    resolve(null);
+                });
+            });
         }
 
-        function generate() {
-            const shapeType = document.getElementById('shape-select').value;
-            if (shapeType === 'text' && !currentFont) return;
+        let isGenerating = false;
+        async function generate() {
+            if (!currentFont || !currentEnvMap || isGenerating) return;
+            isGenerating = true;
 
             loading.style.display = 'flex';
+            document.getElementById('loading-text').innerText = "Generating 3D model...";
 
+            let prevTransform = null;
             if (mesh) {
-                scene.remove(mesh);
-                mesh.geometry.dispose();
-                mesh.material.dispose();
+                prevTransform = { rotation: mesh.rotation.clone(), position: mesh.position.clone() };
             }
 
-            const textVal = document.getElementById('text-input').value || "GOLD";
+            // Fix: Remove any existing logo meshes to prevent duplicates/ghosting
+            const existingMeshes = [];
+            scene.traverse(child => {
+                if (child.name === 'logo-mesh') existingMeshes.push(child);
+            });
+            existingMeshes.forEach(m => {
+                scene.remove(m);
+                if (m.geometry) m.geometry.dispose();
+                if (m.material) m.material.dispose();
+            });
+
+            const shapeType = document.getElementById('shape-select').value;
+            const text = document.getElementById('text-input').value.trim();
+            const depthVal = parseFloat(document.getElementById('depth-range').value);
+            const materialType = document.getElementById('material-select').value;
+            const textureUrl = document.getElementById('texture-select').value;
+
             let geometry;
-
             if (shapeType === 'text') {
-                geometry = new THREE.TextGeometry(textVal, {
-                    font: currentFont, size: 8, height: 2, curveSegments: 32,
-                    bevelEnabled: true, bevelThickness: 0.5, bevelSize: 0.3, bevelSegments: 16
-                });
-                geometry.center();
-            } else if (shapeType === 'goldbar') {
-                const width = 16, depth = 8, height = 3.0;
-                const shape = new THREE.Shape();
-                const radius = 1.0;
-                const x = -width / 2, y = -depth / 2;
+                if (currentFont.type === 'opentype') {
+                    if (text === "") {
+                        geometry = new THREE.BoxGeometry(1, 1, 1);
+                    } else {
+                        const fontSize = 100;
+                        const spacing = parseFloat(document.getElementById('spacing-range').value);
+                        const shapes = [];
+                        let currentX = 0;
 
-                shape.moveTo(x + radius, y);
-                shape.lineTo(x + width - radius, y);
-                shape.quadraticCurveTo(x + width, y, x + width, y + radius);
-                shape.lineTo(x + width, y + depth - radius);
-                shape.quadraticCurveTo(x + width, y + depth, x + width - radius, y + depth);
-                shape.lineTo(x + radius, y + depth);
-                shape.quadraticCurveTo(x, y + depth, x, y + depth - radius);
-                shape.lineTo(x, y + radius);
-                shape.quadraticCurveTo(x, y, x + radius, y);
+                        for (let i = 0; i < text.length; i++) {
+                            const path = currentFont.font.getPath(text[i], currentX, 0, fontSize);
+                            const data = svgLoader.parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${path.toPathData(2)}" /></svg>`);
+                            data.paths.forEach(p => shapes.push(...p.toShapes(true)));
 
-                const extrudeSettings = {
-                    steps: 1, depth: height, bevelEnabled: true,
-                    bevelThickness: 0.6, bevelSize: 0.6, bevelOffset: 0, bevelSegments: 8
-                };
-
-                geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-                const position = geometry.attributes.position;
-                for (let i = 0; i < position.count; i++) {
-                    const z = position.getZ(i);
-                    if (z > height / 2) {
-                        position.setX(i, position.getX(i) * 0.85);
-                        position.setY(i, position.getY(i) * 0.85);
+                            // Calculate next character position using actual font advance width + user spacing
+                            currentX += currentFont.font.getAdvanceWidth(text[i], fontSize) + spacing;
+                        }
+                        geometry = new THREE.ExtrudeGeometry(shapes, { steps: 1, depth: depthVal * 4, bevelEnabled: true, bevelThickness: 5.0, bevelSize: 2.0, bevelOffset: 0, bevelSegments: 4 });
+                        geometry.rotateX(Math.PI);
                     }
+                } else {
+                    geometry = new THREE.TextGeometry(text || " ", { font: currentFont.font, size: 8, height: depthVal / 2, curveSegments: 12, bevelEnabled: true, bevelThickness: 0.5, bevelSize: 0.3, bevelSegments: 4 });
                 }
-                geometry.rotateX(-Math.PI / 2);
                 geometry.center();
-                position.needsUpdate = true;
-                geometry.computeVertexNormals();
-                setMaterial('#ffcc33', 0.18);
-            } else if (shapeType === 'torus') {
-                geometry = new THREE.TorusKnotGeometry(8, 3, 256, 32);
             } else {
-                geometry = new THREE.SphereGeometry(10, 128, 128);
+                const shape = new THREE.Shape();
+                const w = 16, d = 8, h = 3.0, r = 1.0;
+                shape.moveTo(-w / 2 + r, -d / 2); shape.lineTo(w / 2 - r, -d / 2);
+                shape.quadraticCurveTo(w / 2, -d / 2, w / 2, -d / 2 + r); shape.lineTo(w / 2, d / 2 - r);
+                shape.quadraticCurveTo(w / 2, d / 2, w / 2 - r, d / 2); shape.lineTo(-w / 2 + r, d / 2);
+                shape.quadraticCurveTo(-w / 2, d / 2, -w / 2, d / 2 - r); shape.lineTo(-w / 2, -d / 2 + r);
+                shape.quadraticCurveTo(-w / 2, -d / 2, -w / 2 + r, -d / 2);
+                geometry = new THREE.ExtrudeGeometry(shape, { steps: 1, depth: h, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 8 });
+                geometry.rotateX(-Math.PI / 2); geometry.center();
             }
 
-            const material = new THREE.MeshStandardMaterial({
-                color: mesh ? mesh.material.color : 0xffcc33,
-                metalness: 1.0,
+            geometry.computeBoundingBox();
+            const bSize = new THREE.Vector3();
+            geometry.boundingBox.getSize(bSize);
+            const maxD = Math.max(bSize.x, bSize.y, bSize.z);
+            if (maxD > 35) geometry.scale(35 / maxD, 35 / maxD, 35 / maxD);
+
+            let envIntensity = 0.8;
+            if (materialType === 'metallic') envIntensity = 1.2;
+            if (materialType === 'glass') envIntensity = 0.8;
+
+            const selectedTexture = await loadTexture(textureUrl);
+
+            if (selectedTexture) {
+                const scale = parseFloat(document.getElementById('tex-scale-range').value);
+                // Inverse relationship: higher scale slider = lower repeat value = larger texture
+                const repeatVal = 1 / (scale * 20);
+                selectedTexture.repeat.set(repeatVal, repeatVal);
+            }
+
+            // Fix: If texture is active, use light gray base color to prevent over-exposure
+            const baseColor = selectedTexture ? 0xbbbbbb : (mesh ? mesh.material.color : 0xffcc33);
+
+            const matProps = {
+                color: baseColor,
                 roughness: parseFloat(document.getElementById('rough-range').value),
                 envMap: currentEnvMap,
-                envMapIntensity: 2.5
-            });
+                envMapIntensity: selectedTexture ? envIntensity * 1.2 : envIntensity, // Reduced boost to fix washout
+                map: selectedTexture,
+                emissive: 0x000000, // Removed emissive glow to prevent detail loss
+                emissiveMap: selectedTexture
+            };
+
+            let material;
+            if (materialType === 'glass') {
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0.1, transmission: 1.0, ior: 1.52, thickness: 3.0, transparent: true, opacity: 1, clearcoat: 1.0, clearcoatRoughness: 0.05 });
+            } else if (materialType === 'metallic') {
+                // If texture is applied, reduce metalness so the diffuse color is more visible
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: selectedTexture ? 0.6 : 1.0 });
+            } else if (materialType === 'plastic') {
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, clearcoat: 1.0, clearcoatRoughness: 0.1 });
+            } else if (materialType === 'cloth') {
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, sheen: new THREE.Color(matProps.color).multiplyScalar(0.2) });
+            } else { // Wood
+                material = new THREE.MeshPhysicalMaterial({ ...matProps, metalness: 0, reflectance: 0.2 });
+            }
+
+            if (backdrop) {
+                // Visibility is handled by updateBackdrop
+            }
 
             material.onBeforeCompile = (shader) => {
                 shader.uniforms.uRgbIntensity = uniforms.uRgbIntensity;
                 shader.uniforms.uFresnelPower = uniforms.uFresnelPower;
                 shader.uniforms.uTime = uniforms.uTime;
-
-                shader.vertexShader = `
-          varying vec3 vNormalW;
-          varying vec3 vViewDirW;
-          ${shader.vertexShader}
-        `.replace(
-                    `#include <worldpos_vertex>`,
-                    `#include <worldpos_vertex>
-           vNormalW = normalize( vec3( modelMatrix * vec4( transformedNormal, 0.0 ) ) );
-           vViewDirW = normalize( cameraPosition - worldPosition.xyz );
-          `
-                );
-
-                shader.fragmentShader = `
-          uniform float uRgbIntensity;
-          uniform float uFresnelPower;
-          uniform float uTime;
-          varying vec3 vNormalW;
-          varying vec3 vViewDirW;
-          ${shader.fragmentShader}
-        `.replace(
-                    `#include <dithering_fragment>`,
-                    `#include <dithering_fragment>
-          float fresnel = pow(1.0 - max(dot(vNormalW, vViewDirW), 0.0), uFresnelPower);
-          vec3 shift;
-          shift.r = fresnel * abs(sin(vNormalW.x * 5.0 + uTime * 0.5));
-          shift.g = fresnel * abs(sin(vNormalW.y * 5.0 + uTime * 0.6 + 2.0));
-          shift.b = fresnel * abs(sin(vNormalW.z * 5.0 + uTime * 0.7 + 4.2));
-          gl_FragColor.rgb += shift * uRgbIntensity;
-          `
-                );
+                shader.vertexShader = `varying vec3 vNormalW;\nvarying vec3 vViewDirW;\n` + shader.vertexShader.replace('#include <worldpos_vertex>', `#include <worldpos_vertex>\nvec4 localWorldPosition = modelMatrix * vec4( transformed, 1.0 );\nvNormalW = normalize( vec3( modelMatrix * vec4( objectNormal, 0.0 ) ) ) ;\nvViewDirW = normalize( cameraPosition - localWorldPosition.xyz );`);
+                shader.fragmentShader = `uniform float uRgbIntensity;\nuniform float uFresnelPower;\nuniform float uTime;\nvarying vec3 vNormalW;\nvarying vec3 vViewDirW;\n` + shader.fragmentShader.replace('#include <dithering_fragment>', `#include <dithering_fragment>\nfloat fresnel = pow(1.0 - max(dot(vNormalW, vViewDirW), 0.0), uFresnelPower);\nvec3 shift; shift.r = fresnel * abs(sin(vNormalW.x * 5.0 + uTime * 0.5));\nshift.g = fresnel * abs(sin(vNormalW.y * 5.0 + uTime * 0.6 + 2.0));\nshift.b = fresnel * abs(sin(vNormalW.z * 5.0 + uTime * 0.7 + 4.2));\ngl_FragColor.rgb += shift * uRgbIntensity;`);
             };
 
             mesh = new THREE.Mesh(geometry, material);
-            scene.add(mesh);
-
-            setTimeout(() => { loading.style.display = 'none'; }, 200);
-        }
-
-        function setMaterial(hex, roughness) {
-            if (mesh) {
-                mesh.material.color.set(hex);
-                mesh.material.roughness = roughness;
-                document.getElementById('rough-range').value = roughness;
-                document.getElementById('rough-val').innerText = roughness.toFixed(2);
+            mesh.name = 'logo-mesh'; // Name it for easy identification/removal
+            if (prevTransform) {
+                mesh.rotation.copy(prevTransform.rotation);
+                mesh.position.copy(prevTransform.position);
             }
+            scene.add(mesh);
+            isGenerating = false;
+            setTimeout(() => loading.style.display = 'none', 100);
         }
 
         function animate() {
             requestAnimationFrame(animate);
             uniforms.uTime.value += 0.01;
-
-            // Smooth camera transition
             camera.position.z += (targetZ - camera.position.z) * 0.1;
+            const rt = document.getElementById('rotate-toggle');
+            if (mesh && rt && rt.checked && !isDragging) mesh.rotation.y += 0.005;
 
-            const shouldRotate = document.getElementById('rotate-toggle').checked;
-            if (mesh && shouldRotate && !isDragging) {
-                mesh.rotation.y += 0.002;
-                if (document.getElementById('shape-select').value === 'goldbar') {
-                    mesh.rotation.x = 0.4;
+            if (composer) {
+                composer.render();
+            } else {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function updateBackgroundStyle() {
+            const style = document.getElementById('bg-style-select').value;
+            const bloomRange = document.getElementById('bloom-range');
+            const bloomVal = document.getElementById('bloom-val');
+
+            if (style === 'transparent') {
+                scene.background = null;
+                renderer.setClearColor(0x000000, 0);
+                renderer.setClearAlpha(0);
+                if (backdrop) backdrop.visible = false;
+                document.getElementById('backdrop-style-select').value = 'none';
+                document.getElementById('backdrop-color-controls').classList.add('hidden');
+
+                // Disable Bloom for clean transparency
+                if (bloomPass) bloomPass.strength = 0;
+                if (bloomRange) {
+                    bloomRange.value = 0;
+                    bloomRange.disabled = true;
+                    bloomRange.parentElement.style.opacity = "0.5";
                 }
+                if (bloomVal) bloomVal.innerText = "0 (Fixed)";
+                return;
             }
 
-            renderer.render(scene, camera);
+            renderer.setClearAlpha(1);
+            if (bloomRange) {
+                bloomRange.disabled = false;
+                bloomRange.parentElement.style.opacity = "1.0";
+                // Restore bloom from slider
+                if (bloomPass) {
+                    bloomPass.strength = parseFloat(bloomRange.value);
+                    bloomPass.threshold = 0.5;
+                }
+                if (bloomVal) bloomVal.innerText = parseFloat(bloomRange.value).toFixed(2);
+            }
+
+            if (style === 'white') {
+                scene.background = new THREE.Color(0xffffff);
+                renderer.setClearColor(0xffffff, 1);
+            } else if (style === 'dark') {
+                scene.background = new THREE.Color(0x1e293b);
+                renderer.setClearColor(0x1e293b, 1);
+            } else if (style === 'midnight') {
+                scene.background = new THREE.Color(0x0f172a);
+                renderer.setClearColor(0x0f172a, 1);
+            } else if (style.startsWith('gradient-')) {
+                const size = 512;
+                const canvas = document.createElement('canvas');
+                canvas.width = 1; canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                const grad = ctx.createLinearGradient(0, 0, 0, size);
+
+                if (style === 'gradient-soft') {
+                    grad.addColorStop(0, '#f3f4f6'); grad.addColorStop(1, '#ffffff');
+                } else if (style === 'gradient-dark') {
+                    grad.addColorStop(0, '#1e1b4b'); grad.addColorStop(1, '#020617');
+                } else if (style === 'gradient-gold') {
+                    grad.addColorStop(0, '#451a03'); grad.addColorStop(1, '#000000');
+                }
+
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 1, size);
+                scene.background = new THREE.CanvasTexture(canvas);
+                renderer.setClearColor(0x000000, 1);
+            }
         }
 
-        let isDragging = false;
-        let prevMouse = { x: 0, y: 0 };
+        function updateBackdrop() {
+            const style = document.getElementById('backdrop-style-select').value;
+            const controls = document.getElementById('backdrop-color-controls');
+            const c2Container = document.getElementById('backdrop-color-2-container');
 
+            if (style === 'none') {
+                if (backdrop) backdrop.visible = false;
+                controls.classList.add('hidden');
+                return;
+            }
+
+            controls.classList.remove('hidden');
+            const color1 = document.getElementById('backdrop-color-1').value;
+            const color2 = document.getElementById('backdrop-color-2').value;
+
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            if (style === 'grid') {
+                c2Container.classList.remove('hidden');
+                ctx.fillStyle = color2;
+                ctx.fillRect(0, 0, size, size);
+                ctx.strokeStyle = color1;
+                ctx.lineWidth = 2;
+                const cellSize = size / 16;
+                for (let i = 0; i <= size; i += cellSize) {
+                    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, size); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(size, i); ctx.stroke();
+                }
+            } else if (style === 'solid') {
+                c2Container.classList.add('hidden');
+                ctx.fillStyle = color1;
+                ctx.fillRect(0, 0, size, size);
+            } else if (style === 'gradient-linear') {
+                c2Container.classList.remove('hidden');
+                const grad = ctx.createLinearGradient(0, 0, 0, size);
+                grad.addColorStop(0, color1); grad.addColorStop(1, color2);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, size, size);
+            } else if (style === 'gradient-radial') {
+                c2Container.classList.remove('hidden');
+                const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+                grad.addColorStop(0, color1); grad.addColorStop(1, color2);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, size, size);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            if (!backdrop) {
+                const geometry = new THREE.PlaneGeometry(300, 300);
+                const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.9 });
+                backdrop = new THREE.Mesh(geometry, material);
+                backdrop.position.z = -80;
+                scene.add(backdrop);
+            } else {
+                if (backdrop.material.map) backdrop.material.map.dispose();
+                backdrop.material.map = texture;
+                backdrop.material.needsUpdate = true;
+            }
+            backdrop.visible = true;
+        }
+
+        function updateZoom(val) {
+            targetZ = Math.max(15, Math.min(150, val));
+            const zv = document.getElementById('zoom-val');
+            const zr = document.getElementById('zoom-range');
+            if (zv) zv.innerText = Math.round(targetZ);
+            if (zr) zr.value = targetZ;
+        }
+
+        let isDragging = false, isPanning = false, prevMouse = { x: 0, y: 0 };
         function setupInteractions() {
-            const startMove = (x, y) => { isDragging = true; prevMouse = { x, y }; };
-            const endMove = () => isDragging = false;
-            const move = (x, y) => {
-                if (isDragging && mesh) {
-                    mesh.rotation.y += (x - prevMouse.x) * 0.01;
-                    mesh.rotation.x += (y - prevMouse.y) * 0.01;
-                    prevMouse = { x, y };
+            // Texture Gallery Logic
+            const modal = document.getElementById('texture-gallery-modal');
+            const openBtn = document.getElementById('open-gallery-btn');
+            const closeBtn = document.getElementById('close-gallery-btn');
+            const overlay = document.getElementById('close-gallery-overlay');
+            const grid = document.getElementById('gallery-grid');
+            const textureSelect = document.getElementById('texture-select');
+
+            function populateGallery() {
+                grid.innerHTML = '';
+
+                const soloOptions = Array.from(textureSelect.querySelectorAll('option:not(optgroup option)'));
+                const optGroups = Array.from(textureSelect.querySelectorAll('optgroup'));
+
+                function createSection(titleText, options) {
+                    const section = document.createElement('div');
+                    section.className = 'flex flex-col gap-4';
+
+                    const heading = document.createElement('h3');
+                    heading.className = 'text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2';
+                    heading.innerText = titleText;
+                    section.appendChild(heading);
+
+                    const itemGrid = document.createElement('div');
+                    itemGrid.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4';
+                    options.forEach(opt => itemGrid.appendChild(createGalleryItem(opt)));
+
+                    section.appendChild(itemGrid);
+                    grid.appendChild(section);
+                }
+
+                if (soloOptions.length > 0) {
+                    createSection("GENERAL", soloOptions);
+                }
+
+                optGroups.forEach(group => {
+                    createSection(group.label, Array.from(group.querySelectorAll('option')));
+                });
+            }
+
+            function createGalleryItem(opt) {
+                const url = opt.value;
+                const name = opt.innerText;
+                const card = document.createElement('div');
+                card.className = 'group relative aspect-square w-full bg-slate-800 rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all shadow-lg active:scale-95';
+
+                if (url === 'none') {
+                    card.innerHTML = `<div class="w-full h-full flex items-center justify-center text-[10px] text-slate-500 font-bold uppercase">None</div>`;
+                } else {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.loading = 'lazy';
+                    img.className = 'w-full h-full object-cover group-hover:scale-110 transition-transform duration-500';
+                    card.appendChild(img);
+
+                    const label = document.createElement('div');
+                    label.className = 'absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-md p-2 text-[8px] text-white font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity';
+                    label.innerText = name;
+                    card.appendChild(label);
+                }
+
+                if (textureSelect.value === url) card.classList.add('border-blue-500', 'ring-2', 'ring-blue-500/50');
+
+                card.onclick = () => {
+                    textureSelect.value = url;
+                    generate();
+                    modal.classList.add('hidden');
+                };
+
+                return card;
+            }
+
+            openBtn.onclick = () => {
+                populateGallery();
+                modal.classList.remove('hidden');
+            };
+            closeBtn.onclick = () => modal.classList.add('hidden');
+            overlay.onclick = () => modal.classList.add('hidden');
+
+            canvas.onmousedown = (e) => {
+                if (e.button === 0) {
+                    if (e.shiftKey) isPanning = true; else isDragging = true;
+                    prevMouse = { x: e.clientX, y: e.clientY };
                 }
             };
-
-            const updateZoomUI = (val) => {
-                targetZ = Math.max(15, Math.min(120, val));
-                document.getElementById('zoom-range').value = targetZ;
-                document.getElementById('zoom-val').innerText = Math.round(targetZ);
+            window.onmouseup = () => { isDragging = false; isPanning = false; };
+            canvas.onmousemove = (e) => {
+                if (mesh && (isDragging || isPanning)) {
+                    const dx = e.clientX - prevMouse.x, dy = e.clientY - prevMouse.y;
+                    if (isDragging) { mesh.rotation.y += dx * 0.01; mesh.rotation.x += dy * 0.01; }
+                    else { mesh.position.x += dx * 0.05; mesh.position.y -= dy * 0.05; }
+                    prevMouse = { x: e.clientX, y: e.clientY };
+                }
             };
-
-            canvas.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                updateZoomUI(targetZ + e.deltaY * 0.05);
-            }, { passive: false });
-
-            canvas.onmousedown = (e) => startMove(e.clientX, e.clientY);
-            window.onmouseup = endMove;
-            canvas.onmousemove = (e) => move(e.clientX, e.clientY);
-
-            canvas.ontouchstart = (e) => { if (e.touches.length === 1) startMove(e.touches[0].clientX, e.touches[0].clientY); };
-            canvas.ontouchend = endMove;
-            canvas.ontouchmove = (e) => { if (e.touches.length === 1) move(e.touches[0].clientX, e.touches[0].clientY); };
-
-            document.getElementById('zoom-range').oninput = (e) => {
-                updateZoomUI(parseFloat(e.target.value));
+            canvas.addEventListener('wheel', (e) => { e.preventDefault(); updateZoom(targetZ + e.deltaY * 0.05); }, { passive: false });
+            document.getElementById('zoom-range').oninput = (e) => updateZoom(parseFloat(e.target.value));
+            document.getElementById('rough-range').oninput = (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById('rough-val').innerText = val.toFixed(2);
+                if (mesh) mesh.material.roughness = val;
+            };
+            document.getElementById('spacing-range').oninput = (e) => {
+                document.getElementById('spacing-val').innerText = e.target.value;
+                generate();
+            };
+            document.getElementById('depth-range').oninput = (e) => { document.getElementById('depth-val').innerText = e.target.value; generate(); };
+            document.getElementById('bloom-range').oninput = (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById('bloom-val').innerText = val.toFixed(2);
+                if (bloomPass) bloomPass.strength = val;
+            };
+            document.getElementById('rgb-range').oninput = (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById('rgb-val').innerText = val.toFixed(1);
+                uniforms.uRgbIntensity.value = val;
+            };
+            document.getElementById('tex-scale-range').oninput = (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById('tex-scale-val').innerText = val.toFixed(1);
+                generate();
+            };
+            document.getElementById('backdrop-style-select').onchange = updateBackdrop;
+            document.getElementById('backdrop-color-1').oninput = updateBackdrop;
+            document.getElementById('backdrop-color-2').oninput = updateBackdrop;
+            document.getElementById('bg-style-select').onchange = updateBackgroundStyle;
+            document.getElementById('env-select').onchange = createStudioEnv;
+            document.getElementById('material-select').onchange = () => { updatePresetsUI(); generate(); };
+            document.getElementById('texture-select').onchange = generate;
+            document.getElementById('font-select').onchange = (e) => loadFont(e.target.value);
+            document.getElementById('regen-btn').onclick = generate;
+            document.getElementById('shape-select').onchange = generate;
+            document.getElementById('download-btn').onclick = () => {
+                const link = document.createElement('a');
+                link.download = `logo-3d-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
             };
         }
-
-        document.getElementById('font-select').onchange = (e) => loadFont(e.target.value);
-        document.getElementById('rough-range').oninput = (e) => {
-            const val = parseFloat(e.target.value);
-            document.getElementById('rough-val').innerText = val.toFixed(2);
-            if (mesh) mesh.material.roughness = val;
-        };
-        document.getElementById('rgb-range').oninput = (e) => {
-            const val = parseFloat(e.target.value);
-            document.getElementById('rgb-val').innerText = val.toFixed(1);
-            uniforms.uRgbIntensity.value = val;
-        };
-
-        document.getElementById('regen-btn').onclick = generate;
-        document.getElementById('shape-select').onchange = generate;
-        document.getElementById('download-btn').onclick = () => {
-            const link = document.createElement('a');
-            link.download = `metallic-3d-${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        };
 
         window.onload = initThree;
     </script>
